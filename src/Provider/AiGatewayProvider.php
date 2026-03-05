@@ -79,7 +79,10 @@ class AiGatewayProvider extends AbstractApiProvider
             RequestAuthenticationMethod::apiKey(),
         ];
         if (version_compare(AiClient::VERSION, '1.2.0', '>=')) {
-            $args[] = 'Text generation with any AI model via the Vercel AI Gateway.';
+            $args[] = function_exists('__')
+                // phpcs:ignore Generic.Files.LineLength
+                ? __('Generate and edit text, images, and more with over 100 AI models from over 20 providers.', 'ai-gateway-provider')
+                : 'Generate and edit text, images, and more with over 100 AI models from over 20 providers.';
         }
         return new ProviderMetadata(...$args);
     }
