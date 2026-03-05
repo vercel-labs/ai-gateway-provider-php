@@ -259,7 +259,7 @@ class AiGatewayTextGenerationModelTest extends TestCase
         $this->assertSame('Gets the weather for a location.', $tool['description']);
         $this->assertSame(
             ['type' => 'object', 'properties' => ['location' => ['type' => 'string']], 'required' => ['location']],
-            $tool['parameters']
+            $tool['inputSchema']
         );
     }
 
@@ -318,14 +318,14 @@ class AiGatewayTextGenerationModelTest extends TestCase
         $this->assertSame('tool-call', $assistantContent['type']);
         $this->assertSame('call_123', $assistantContent['toolCallId']);
         $this->assertSame('get_weather', $assistantContent['toolName']);
-        $this->assertSame(['location' => 'Paris'], $assistantContent['args']);
+        $this->assertSame(['location' => 'Paris'], $assistantContent['input']);
 
         $this->assertSame('tool', $messages[2]['role']);
         $toolContent = $messages[2]['content'][0];
         $this->assertSame('tool-result', $toolContent['type']);
         $this->assertSame('call_123', $toolContent['toolCallId']);
         $this->assertSame('get_weather', $toolContent['toolName']);
-        $this->assertSame(['temp' => 22], $toolContent['result']);
+        $this->assertSame(['type' => 'json', 'value' => ['temp' => 22]], $toolContent['output']);
     }
 
     public function testRequestBodyIncludesJsonResponseFormat(): void
@@ -438,7 +438,7 @@ class AiGatewayTextGenerationModelTest extends TestCase
                         'type' => 'tool-call',
                         'toolCallId' => 'call_abc',
                         'toolName' => 'get_weather',
-                        'args' => ['location' => 'Berlin'],
+                        'input' => json_encode(['location' => 'Berlin']),
                     ],
                 ],
                 'finishReason' => 'tool_calls',
@@ -470,6 +470,7 @@ class AiGatewayTextGenerationModelTest extends TestCase
             'length' => ['length', FinishReasonEnum::LENGTH],
             'content_filter' => ['content_filter', FinishReasonEnum::CONTENT_FILTER],
             'tool_calls' => ['tool_calls', FinishReasonEnum::TOOL_CALLS],
+            'tool-calls' => ['tool-calls', FinishReasonEnum::TOOL_CALLS],
             'error' => ['error', FinishReasonEnum::ERROR],
         ];
     }
@@ -620,6 +621,155 @@ class AiGatewayTextGenerationModelTest extends TestCase
         $this->assertSame(30, $usage->getPromptTokens());
         $this->assertSame(15, $usage->getCompletionTokens());
         $this->assertSame(45, $usage->getTotalTokens());
+    }
+
+    public function testJsonSchemaResponseRoundTrip(): void
+    {
+        $jsonText = '{"city":"Paris","temperature":22,"unit":"celsius"}';
+        $response = new Response(
+            200,
+            ['Content-Type' => 'application/json'],
+            json_encode([
+                'content' => [['type' => 'text', 'text' => $jsonText]],
+                'finishReason' => 'stop',
+                'usage' => ['promptTokens' => 10, 'completionTokens' => 8],
+            ])
+        );
+        $transporter = new MockHttpTransporter($response);
+        $model = $this->createModel($transporter);
+
+        $schema = [
+            'type' => 'object',
+            'properties' => [
+                'city' => ['type' => 'string'],
+                'temperature' => ['type' => 'number'],
+                'unit' => ['type' => 'string'],
+            ],
+            'required' => ['city', 'temperature', 'unit'],
+        ];
+        $config = ModelConfig::fromArray([]);
+        $config->setOutputSchema($schema);
+        $model->setConfig($config);
+
+        $result = $model->generateTextResult($this->createSimplePrompt());
+
+        $body = $transporter->getLastRequest()->getData();
+        $this->assertArrayHasKey('responseFormat', $body);
+        $this->assertSame('json', $body['responseFormat']['type']);
+        $this->assertSame($schema, $body['responseFormat']['schema']);
+
+        $text = $result->toText();
+        $decoded = json_decode($text, true);
+        $this->assertIsArray($decoded);
+        $this->assertArrayHasKey('city', $decoded);
+        $this->assertArrayHasKey('temperature', $decoded);
+        $this->assertArrayHasKey('unit', $decoded);
+        $this->assertSame('Paris', $decoded['city']);
+        $this->assertSame(22, $decoded['temperature']);
+        $this->assertSame('celsius', $decoded['unit']);
+    }
+
+    public function testFunctionCallingRoundTrip(): void
+    {
+        $toolCallResponse = new Response(
+            200,
+            ['Content-Type' => 'application/json'],
+            json_encode([
+                'content' => [
+                    [
+                        'type' => 'tool-call',
+                        'toolCallId' => 'call_weather_1',
+                        'toolName' => 'get_weather',
+                        'input' => json_encode(['location' => 'Paris']),
+                    ],
+                ],
+                'finishReason' => 'tool_calls',
+                'usage' => ['promptTokens' => 15, 'completionTokens' => 10],
+            ])
+        );
+
+        $textResponse = new Response(
+            200,
+            ['Content-Type' => 'application/json'],
+            json_encode([
+                'content' => [['type' => 'text', 'text' => 'The weather in Paris is 18°C.']],
+                'finishReason' => 'stop',
+                'usage' => ['promptTokens' => 30, 'completionTokens' => 12],
+            ])
+        );
+
+        $transporter = new MockHttpTransporter($toolCallResponse, $textResponse);
+        $model = $this->createModel($transporter);
+
+        $config = ModelConfig::fromArray([]);
+        $config->setFunctionDeclarations([
+            new FunctionDeclaration(
+                'get_weather',
+                'Gets the weather for a location.',
+                [
+                    'type' => 'object',
+                    'properties' => [
+                        'location' => ['type' => 'string'],
+                    ],
+                    'required' => ['location'],
+                ]
+            ),
+        ]);
+        $model->setConfig($config);
+
+        $userMessage = [
+            new Message(
+                MessageRoleEnum::user(),
+                [new MessagePart('What is the weather in Paris?')]
+            ),
+        ];
+        $result1 = $model->generateTextResult($userMessage);
+
+        $body1 = $transporter->getRequest(0)->getData();
+        $this->assertArrayHasKey('tools', $body1);
+        $this->assertSame('get_weather', $body1['tools'][0]['name']);
+
+        $parts = $result1->toMessage()->getParts();
+        $this->assertCount(1, $parts);
+        $functionCall = $parts[0]->getFunctionCall();
+        $this->assertInstanceOf(FunctionCall::class, $functionCall);
+        $this->assertSame('call_weather_1', $functionCall->getId());
+        $this->assertSame('get_weather', $functionCall->getName());
+        $this->assertSame(['location' => 'Paris'], $functionCall->getArgs());
+
+        $multiTurnPrompt = [
+            $userMessage[0],
+            $result1->toMessage(),
+            new Message(
+                MessageRoleEnum::user(),
+                [
+                    new MessagePart(
+                        new FunctionResponse(
+                            'call_weather_1',
+                            'get_weather',
+                            ['city' => 'Paris', 'temperature' => 18, 'unit' => 'celsius']
+                        )
+                    ),
+                ]
+            ),
+        ];
+        $result2 = $model->generateTextResult($multiTurnPrompt);
+
+        $body2 = $transporter->getRequest(1)->getData();
+        $messages = $body2['prompt'];
+        $this->assertCount(3, $messages);
+
+        $this->assertSame('user', $messages[0]['role']);
+        $this->assertSame('assistant', $messages[1]['role']);
+        $this->assertSame('tool-call', $messages[1]['content'][0]['type']);
+        $this->assertSame('call_weather_1', $messages[1]['content'][0]['toolCallId']);
+        $this->assertSame('get_weather', $messages[1]['content'][0]['toolName']);
+
+        $this->assertSame('tool', $messages[2]['role']);
+        $this->assertSame('tool-result', $messages[2]['content'][0]['type']);
+        $this->assertSame('call_weather_1', $messages[2]['content'][0]['toolCallId']);
+
+        $this->assertSame('The weather in Paris is 18°C.', $result2->toText());
     }
 
     public function testTokenUsageMissingReturnsZeros(): void

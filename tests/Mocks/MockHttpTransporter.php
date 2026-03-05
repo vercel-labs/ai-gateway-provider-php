@@ -11,35 +11,46 @@ use WordPress\AiClient\Providers\Http\DTO\Response;
 
 class MockHttpTransporter implements HttpTransporterInterface
 {
-    /** @var Response */
-    private $response;
+    /** @var Response[] */
+    private $responses;
 
-    /** @var Request|null */
-    private $lastRequest;
+    /** @var int */
+    private $callIndex = 0;
 
-    /** @var RequestOptions|null */
-    private $lastOptions;
+    /** @var Request[] */
+    private $requests = [];
 
-    public function __construct(Response $response)
+    /** @var RequestOptions[] */
+    private $options = [];
+
+    public function __construct(Response ...$responses)
     {
-        $this->response = $response;
+        $this->responses = $responses;
     }
 
     public function send(Request $request, ?RequestOptions $options = null): Response
     {
-        $this->lastRequest = $request;
-        $this->lastOptions = $options;
+        $this->requests[] = $request;
+        $this->options[] = $options;
 
-        return $this->response;
+        $index = min($this->callIndex, count($this->responses) - 1);
+        $this->callIndex++;
+
+        return $this->responses[$index];
     }
 
     public function getLastRequest(): ?Request
     {
-        return $this->lastRequest;
+        return $this->requests ? $this->requests[count($this->requests) - 1] : null;
     }
 
     public function getLastOptions(): ?RequestOptions
     {
-        return $this->lastOptions;
+        return $this->options ? $this->options[count($this->options) - 1] : null;
+    }
+
+    public function getRequest(int $index): ?Request
+    {
+        return $this->requests[$index] ?? null;
     }
 }

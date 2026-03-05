@@ -44,7 +44,7 @@ use WordPress\AiClient\Tools\DTO\FunctionDeclaration;
  *     text?: string,
  *     toolCallId?: string,
  *     toolName?: string,
- *     args?: mixed
+ *     input?: mixed
  * }
  * @phpstan-type ResponseData array{
  *     content?: ResponseContentPart|list<ResponseContentPart>,
@@ -227,7 +227,7 @@ class AiGatewayTextGenerationModel extends AbstractApiBasedModel implements Text
                     ];
                     $params = $decl->getParameters();
                     if ($params !== null) {
-                        $tool['parameters'] = $params;
+                        $tool['inputSchema'] = $params;
                     }
                     return $tool;
                 },
@@ -324,7 +324,7 @@ class AiGatewayTextGenerationModel extends AbstractApiBasedModel implements Text
             ];
             $args = $functionCall->getArgs();
             if ($args !== null) {
-                $toolCall['args'] = $args;
+                $toolCall['input'] = $args;
             }
             return $toolCall;
         }
@@ -335,7 +335,10 @@ class AiGatewayTextGenerationModel extends AbstractApiBasedModel implements Text
                 'type' => 'tool-result',
                 'toolCallId' => $functionResponse->getId() ?? '',
                 'toolName' => $functionResponse->getName() ?? '',
-                'result' => $functionResponse->getResponse(),
+                'output' => [
+                    'type' => 'json',
+                    'value' => $functionResponse->getResponse(),
+                ],
             ];
         }
 
@@ -402,11 +405,12 @@ class AiGatewayTextGenerationModel extends AbstractApiBasedModel implements Text
             if ($contentPart['type'] === 'text' && isset($contentPart['text'])) {
                 $parts[] = new MessagePart($contentPart['text']);
             } elseif ($contentPart['type'] === 'tool-call') {
+                $rawInput = $contentPart['input'] ?? null;
                 $parts[] = new MessagePart(
                     new FunctionCall(
                         $contentPart['toolCallId'] ?? null,
                         $contentPart['toolName'] ?? null,
-                        $contentPart['args'] ?? null
+                        is_string($rawInput) ? json_decode($rawInput, true) : $rawInput
                     )
                 );
             }
