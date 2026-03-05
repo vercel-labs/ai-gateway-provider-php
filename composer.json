@@ -1,6 +1,6 @@
 {
     "name": "vercel/ai-gateway-provider",
-    "description": "Vercel AI Gateway provider for the PHP AI Client SDK. Works as both a Composer package and WordPress plugin.",
+    "description": "Vercel AI Gateway provider for the PHP AI Client SDK. Works as a Composer package and WordPress plugin.",
     "license": "MIT",
     "keywords": [
         "ai",
@@ -28,6 +28,7 @@
         "guzzlehttp/guzzle": "^7.0",
         "phpcompatibility/php-compatibility": "dev-develop",
         "phpstan/phpstan": "~2.1",
+        "phpunit/phpunit": "^9.5",
         "slevomat/coding-standard": "^8.20",
         "squizlabs/php_codesniffer": "^3.7 || ^4.0",
         "symfony/dotenv": "^5.4",
@@ -41,6 +42,12 @@
     "autoload": {
         "psr-4": {
             "Vercel\\AiGatewayProvider\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Vercel\\AiGatewayProvider\\Tests\\Mocks\\": "tests/Mocks/",
+            "Vercel\\AiGatewayProvider\\Tests\\Traits\\": "tests/Traits/"
         }
     },
     "config": {
@@ -57,6 +64,9 @@
     "scripts": {
         "phpcbf": "phpcbf",
         "phpcs": "phpcs",
-        "phpstan": "phpstan analyze --memory-limit=256M"
+        "phpstan": "phpstan analyze --memory-limit=256M",
+        "test": "@test:unit",
+        "test:unit": "phpunit",
+        "test:integration": "phpunit --configuration phpunit-integration.xml.dist"
     }
 }

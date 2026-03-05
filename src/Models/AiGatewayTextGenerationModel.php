@@ -294,43 +294,23 @@ class AiGatewayTextGenerationModel extends AbstractApiBasedModel implements Text
 
         $file = $part->getFile();
         if ($file !== null) {
-            $mimeType = $file->getMimeType();
-
-            if ($file->isImage()) {
-                $url = $file->getUrl();
-                if ($url !== null) {
-                    return [
-                        'type' => 'image',
-                        'image' => $url,
-                        'mimeType' => $mimeType,
-                    ];
-                }
-
-                $base64Data = $file->getBase64Data();
-                if ($base64Data !== null) {
-                    return [
-                        'type' => 'image',
-                        'image' => $base64Data,
-                        'mimeType' => $mimeType,
-                    ];
-                }
-            }
+            $mediaType = $file->getMimeType();
 
             $url = $file->getUrl();
             if ($url !== null) {
                 return [
                     'type' => 'file',
                     'data' => $url,
-                    'mimeType' => $mimeType,
+                    'mediaType' => $mediaType,
                 ];
             }
 
-            $base64Data = $file->getBase64Data();
-            if ($base64Data !== null) {
+            $dataUri = $file->getDataUri();
+            if ($dataUri !== null) {
                 return [
                     'type' => 'file',
-                    'data' => $base64Data,
-                    'mimeType' => $mimeType,
+                    'data' => $dataUri,
+                    'mediaType' => $mediaType,
                 ];
             }
         }

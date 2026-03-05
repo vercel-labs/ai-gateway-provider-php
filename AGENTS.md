@@ -28,6 +28,9 @@ The PHP AI Client SDK does not support streaming yet. Therefore, we are unable t
 - `composer phpcs` — Run PHP_CodeSniffer to check code style
 - `composer phpcbf` — Auto-fix code style issues
 - `composer phpstan` — Run PHPStan static analysis
+- `composer test` — Alias for `test:unit`
+- `composer test:unit` — Run unit tests (fast, no network, no API keys needed)
+- `composer test:integration` — Run integration tests against real AI Gateway models
 
 ## End-to-End Testing
 

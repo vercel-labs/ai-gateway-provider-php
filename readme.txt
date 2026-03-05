@@ -7,7 +7,7 @@ License:      MIT
 License URI:  https://opensource.org/license/mit
 Tags:         ai, gateway, vercel, artificial-intelligence, llm, connector
 
-Vercel AI Gateway provider for the PHP AI Client SDK. Works as both a Composer package and WordPress plugin.
+Vercel AI Gateway provider for the PHP AI Client SDK. Works as a Composer package and WordPress plugin.
 
 == Description ==
 
