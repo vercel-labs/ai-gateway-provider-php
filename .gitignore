@@ -1,0 +1,6 @@
+tools/output
+vendor
+.env
+
+# opensrc - source code for packages
+opensrc/
