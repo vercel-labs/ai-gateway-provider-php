@@ -61,6 +61,7 @@ class AiGatewayTextGenerationModel extends AbstractApiBasedModel implements Text
         'length' => FinishReasonEnum::LENGTH,
         'content_filter' => FinishReasonEnum::CONTENT_FILTER,
         'tool_calls' => FinishReasonEnum::TOOL_CALLS,
+        'tool-calls' => FinishReasonEnum::TOOL_CALLS,
         'error' => FinishReasonEnum::ERROR,
     ];
 
