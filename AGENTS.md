@@ -19,6 +19,10 @@ The AI Gateway is a single "provider" in the PHP AI Client SDK, but it proxies m
 
 `AiGatewayModelMetadataDirectory` strips the provider prefix from `specification.modelId` returned by the `/config` endpoint and stores a mapping (`$gatewayModelIdMap`) so `AiGatewayProvider::createModel()` can resolve flat IDs back to full gateway IDs at request time.
 
+## No Streaming Support
+
+The PHP AI Client SDK does not support streaming yet. Therefore, we are unable to support streaming in this provider. This will only become relevant at some point in the future, once the PHP AI Client SDK adds support for it.
+
 ## Workflow Commands
 
 - `composer phpcs` — Run PHP_CodeSniffer to check code style
