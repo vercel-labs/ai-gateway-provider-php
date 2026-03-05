@@ -11,16 +11,39 @@ Vercel AI Gateway provider for the PHP AI Client SDK. Works as both a Composer p
 
 == Description ==
 
-This plugin provides the Vercel AI Gateway integration for the PHP AI Client SDK. It enables WordPress sites to use hundreds of generative AI models from over 30 different providers, including the popular Claude, Gemini, GPT, and Grok models.
+This plugin provides the Vercel AI Gateway integration for the PHP AI Client SDK. It enables WordPress sites to use hundreds of generative AI models from over 20 different providers, including the popular Claude, Gemini, GPT, and Grok models.
 
-**Features:**
+= Features =
 
-* Access models from over 30 providers with just a single API key
+* Access models from over 20 providers with just a single API key
 * Generate text, images, code, and more, including multi-turn conversations
 * Build agents using tool calls
+* Smart fallbacks, e.g. when an underlying provider is experiencing temporary downtime
 * Comprehensive support for the majority of AI model features included
 
-Available models are dynamically discovered from the AI Gateway API.
+Available models are dynamically discovered from the AI Gateway API - you get access to new models as soon as they're available.
+
+= Providers and Models =
+
+The AI Gateway gives you access to more than 100 models from over 20 providers, including:
+
+- Amazon (Nova models)
+- Anthropic (Claude models)
+- Black Forest Labs (Flux models)
+- Google (Gemini, Imagen, and Veo models)
+- MiniMax (MiniMax models)
+- Mistral (Mistral and Devstral models)
+- Moonshot AI (Kimi models)
+- OpenAI (GPT and Dall-E models)
+- Perplexity (Sonar models)
+- xAI (Grok models)
+- Z.ai (GLM models)
+
+You can access all of these and many more directly through the AI Gateway, drastically simplifying your setup. For a full list of models, [browse the official AI Gateway models list](https://vercel.com/ai-gateway/models).
+
+= Terms =
+
+[Vercel AI Product Terms](https://vercel.com/legal/ai-product-terms)
 
 == Installation ==
 
