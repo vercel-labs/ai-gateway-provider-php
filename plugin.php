@@ -20,8 +20,8 @@ declare(strict_types=1);
 
 namespace Vercel\AiGatewayProvider;
 
-use WordPress\AiClient\AiClient;
 use Vercel\AiGatewayProvider\Provider\AiGatewayProvider;
+use WordPress\AiClient\AiClient;
 
 if (!defined('ABSPATH')) {
     return;

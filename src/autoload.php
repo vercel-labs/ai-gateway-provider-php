@@ -11,7 +11,7 @@
 declare(strict_types=1);
 
 spl_autoload_register(static function (string $class): void {
-    $prefix = 'WordPress\\AiGatewayProvider\\';
+    $prefix = 'Vercel\\AiGatewayProvider\\';
     $baseDir = __DIR__ . '/';
 
     $len = strlen($prefix);

@@ -167,7 +167,7 @@ if (str_starts_with($promptInput, '{') || str_starts_with($promptInput, '[')) {
 }
 
 // Provider ID, model ID, and output format.
-$providerId = $named_args['providerId'] ?? null;
+$providerId = $named_args['providerId'] ?? 'ai_gateway';
 $modelId = $named_args['modelId'] ?? null;
 $modelPreference = $named_args['modelPreference'] ?? null;
 $outputFormat = $named_args['outputFormat'] ?? 'message-text';
