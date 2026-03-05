@@ -49,7 +49,7 @@ use WordPress\AiClient\Tools\DTO\FunctionDeclaration;
  * @phpstan-type ResponseData array{
  *     content?: ResponseContentPart|list<ResponseContentPart>,
  *     usage?: array<string, mixed>,
- *     finishReason?: string|array{unified?: string, raw?: string}
+ *     finishReason?: array{unified: string, raw?: string}
  * }
  */
 class AiGatewayTextGenerationModel extends AbstractApiBasedModel implements TextGenerationModelInterface
@@ -59,10 +59,10 @@ class AiGatewayTextGenerationModel extends AbstractApiBasedModel implements Text
     private const FINISH_REASON_MAP = [
         'stop' => FinishReasonEnum::STOP,
         'length' => FinishReasonEnum::LENGTH,
-        'content_filter' => FinishReasonEnum::CONTENT_FILTER,
-        'tool_calls' => FinishReasonEnum::TOOL_CALLS,
+        'content-filter' => FinishReasonEnum::CONTENT_FILTER,
         'tool-calls' => FinishReasonEnum::TOOL_CALLS,
         'error' => FinishReasonEnum::ERROR,
+        'other' => FinishReasonEnum::STOP,
     ];
 
     /**
@@ -446,7 +446,7 @@ class AiGatewayTextGenerationModel extends AbstractApiBasedModel implements Text
 
         $finishReason = $data['finishReason'];
 
-        $reason = is_array($finishReason) ? ($finishReason['unified'] ?? null) : $finishReason;
+        $reason = is_array($finishReason) ? ($finishReason['unified'] ?? null) : null;
         if ($reason === null || !isset(self::FINISH_REASON_MAP[$reason])) {
             throw ResponseException::fromInvalidData(
                 self::API_NAME,

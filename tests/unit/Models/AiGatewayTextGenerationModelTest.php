@@ -66,7 +66,7 @@ class AiGatewayTextGenerationModelTest extends TestCase
                     'type' => 'text',
                     'text' => 'Hello from the model.',
                 ],
-                'finishReason' => 'stop',
+                'finishReason' => ['unified' => 'stop'],
                 'usage' => [
                     'promptTokens' => 10,
                     'completionTokens' => 5,
@@ -273,7 +273,7 @@ class AiGatewayTextGenerationModelTest extends TestCase
                     'type' => 'text',
                     'text' => 'The weather is sunny.',
                 ],
-                'finishReason' => 'stop',
+                'finishReason' => ['unified' => 'stop'],
                 'usage' => [
                     'promptTokens' => 20,
                     'completionTokens' => 10,
@@ -338,7 +338,7 @@ class AiGatewayTextGenerationModelTest extends TestCase
                     'type' => 'text',
                     'text' => '{"name":"test"}',
                 ],
-                'finishReason' => 'stop',
+                'finishReason' => ['unified' => 'stop'],
                 'usage' => [],
             ])
         ));
@@ -414,7 +414,7 @@ class AiGatewayTextGenerationModelTest extends TestCase
                 'content' => [
                     ['type' => 'text', 'text' => 'Hello, world!'],
                 ],
-                'finishReason' => 'stop',
+                'finishReason' => ['unified' => 'stop'],
                 'usage' => ['promptTokens' => 5, 'completionTokens' => 3],
             ])
         );
@@ -441,7 +441,7 @@ class AiGatewayTextGenerationModelTest extends TestCase
                         'input' => json_encode(['location' => 'Berlin']),
                     ],
                 ],
-                'finishReason' => 'tool_calls',
+                'finishReason' => ['unified' => 'tool-calls'],
                 'usage' => ['promptTokens' => 10, 'completionTokens' => 8],
             ])
         );
@@ -468,10 +468,10 @@ class AiGatewayTextGenerationModelTest extends TestCase
         return [
             'stop' => ['stop', FinishReasonEnum::STOP],
             'length' => ['length', FinishReasonEnum::LENGTH],
-            'content_filter' => ['content_filter', FinishReasonEnum::CONTENT_FILTER],
-            'tool_calls' => ['tool_calls', FinishReasonEnum::TOOL_CALLS],
+            'content-filter' => ['content-filter', FinishReasonEnum::CONTENT_FILTER],
             'tool-calls' => ['tool-calls', FinishReasonEnum::TOOL_CALLS],
             'error' => ['error', FinishReasonEnum::ERROR],
+            'other' => ['other', FinishReasonEnum::STOP],
         ];
     }
 
@@ -485,7 +485,7 @@ class AiGatewayTextGenerationModelTest extends TestCase
             ['Content-Type' => 'application/json'],
             json_encode([
                 'content' => [['type' => 'text', 'text' => 'ok']],
-                'finishReason' => $apiReason,
+                'finishReason' => ['unified' => $apiReason, 'raw' => 'some_raw_reason'],
                 'usage' => [],
             ])
         );
@@ -498,26 +498,6 @@ class AiGatewayTextGenerationModelTest extends TestCase
         $this->assertSame($expectedValue, $candidate->getFinishReason()->value);
     }
 
-    public function testFinishReasonAsObjectFormat(): void
-    {
-        $response = new Response(
-            200,
-            ['Content-Type' => 'application/json'],
-            json_encode([
-                'content' => [['type' => 'text', 'text' => 'done']],
-                'finishReason' => ['unified' => 'stop', 'raw' => 'end_turn'],
-                'usage' => [],
-            ])
-        );
-        $transporter = new MockHttpTransporter($response);
-        $model = $this->createModel($transporter);
-
-        $result = $model->generateTextResult($this->createSimplePrompt());
-
-        $candidate = $result->getCandidates()[0];
-        $this->assertTrue($candidate->getFinishReason()->isStop());
-    }
-
     public function testUnknownFinishReasonThrowsResponseException(): void
     {
         $response = new Response(
@@ -525,7 +505,7 @@ class AiGatewayTextGenerationModelTest extends TestCase
             ['Content-Type' => 'application/json'],
             json_encode([
                 'content' => [['type' => 'text', 'text' => 'ok']],
-                'finishReason' => 'unknown_reason',
+                'finishReason' => ['unified' => 'unknown_reason'],
                 'usage' => [],
             ])
         );
@@ -544,7 +524,7 @@ class AiGatewayTextGenerationModelTest extends TestCase
             200,
             ['Content-Type' => 'application/json'],
             json_encode([
-                'finishReason' => 'stop',
+                'finishReason' => ['unified' => 'stop'],
                 'usage' => [],
             ])
         );
@@ -580,7 +560,7 @@ class AiGatewayTextGenerationModelTest extends TestCase
             ['Content-Type' => 'application/json'],
             json_encode([
                 'content' => [['type' => 'text', 'text' => 'hi']],
-                'finishReason' => 'stop',
+                'finishReason' => ['unified' => 'stop'],
                 'usage' => [
                     'inputTokens' => ['total' => 25],
                     'outputTokens' => ['total' => 12],
@@ -605,7 +585,7 @@ class AiGatewayTextGenerationModelTest extends TestCase
             ['Content-Type' => 'application/json'],
             json_encode([
                 'content' => [['type' => 'text', 'text' => 'hi']],
-                'finishReason' => 'stop',
+                'finishReason' => ['unified' => 'stop'],
                 'usage' => [
                     'promptTokens' => 30,
                     'completionTokens' => 15,
@@ -631,7 +611,7 @@ class AiGatewayTextGenerationModelTest extends TestCase
             ['Content-Type' => 'application/json'],
             json_encode([
                 'content' => [['type' => 'text', 'text' => $jsonText]],
-                'finishReason' => 'stop',
+                'finishReason' => ['unified' => 'stop'],
                 'usage' => ['promptTokens' => 10, 'completionTokens' => 8],
             ])
         );
@@ -683,7 +663,7 @@ class AiGatewayTextGenerationModelTest extends TestCase
                         'input' => json_encode(['location' => 'Paris']),
                     ],
                 ],
-                'finishReason' => 'tool_calls',
+                'finishReason' => ['unified' => 'tool-calls'],
                 'usage' => ['promptTokens' => 15, 'completionTokens' => 10],
             ])
         );
@@ -693,7 +673,7 @@ class AiGatewayTextGenerationModelTest extends TestCase
             ['Content-Type' => 'application/json'],
             json_encode([
                 'content' => [['type' => 'text', 'text' => 'The weather in Paris is 18°C.']],
-                'finishReason' => 'stop',
+                'finishReason' => ['unified' => 'stop'],
                 'usage' => ['promptTokens' => 30, 'completionTokens' => 12],
             ])
         );
@@ -779,7 +759,7 @@ class AiGatewayTextGenerationModelTest extends TestCase
             ['Content-Type' => 'application/json'],
             json_encode([
                 'content' => [['type' => 'text', 'text' => 'hi']],
-                'finishReason' => 'stop',
+                'finishReason' => ['unified' => 'stop'],
             ])
         );
         $transporter = new MockHttpTransporter($response);
