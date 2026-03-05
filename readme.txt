@@ -2,7 +2,7 @@
 
 Contributors: wordpressdotorg
 Tested up to: 7.0
-Stable tag:   1.0.0
+Stable tag:   1.0.0-alpha
 License:      MIT
 License URI:  https://opensource.org/license/mit
 Tags:         ai, gateway, vercel, artificial-intelligence, llm, connector

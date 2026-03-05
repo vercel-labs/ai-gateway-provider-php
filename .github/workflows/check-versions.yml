@@ -1,0 +1,28 @@
+name: Check Versions
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'plugin.php'
+      - 'readme.txt'
+      - 'src/Provider/AiGatewayProvider.php'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'plugin.php'
+      - 'readme.txt'
+      - 'src/Provider/AiGatewayProvider.php'
+
+jobs:
+  check-versions:
+    name: 'Check Versions'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Check version consistency
+        run: php tools/check-versions.php
