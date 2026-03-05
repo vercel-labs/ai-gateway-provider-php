@@ -28,7 +28,7 @@ The provider automatically registers itself with the PHP AI Client on the `init`
 ```php
 // Use the provider
 $result = AiClient::prompt('Hello, world!')
-    ->usingProvider('ai-gateway')
+    ->usingProvider('ai_gateway')
     ->generateTextResult();
 ```
 
@@ -47,7 +47,7 @@ putenv('AI_GATEWAY_API_KEY=your-api-key');
 
 // Generate text
 $result = AiClient::prompt('Explain quantum computing')
-    ->usingProvider('ai-gateway')
+    ->usingProvider('ai_gateway')
     ->generateTextResult();
 
 echo $result->toText();
