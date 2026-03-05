@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace Vercel\AiGatewayProvider\Authentication;
 
+use Vercel\AiGatewayProvider\Provider\AiGatewayProvider;
 use WordPress\AiClient\Providers\Http\DTO\ApiKeyRequestAuthentication;
 use WordPress\AiClient\Providers\Http\DTO\Request;
 
@@ -35,6 +36,16 @@ class AiGatewayRequestAuthentication extends ApiKeyRequestAuthentication
         $request = parent::authenticateRequest($request);
         $request = $request->withHeader('ai-gateway-protocol-version', '0.0.1');
         $request = $request->withHeader('ai-gateway-auth-method', 'api-key');
+
+        // Consider whether this is running in a WordPress environment as part of the User-Agent header.
+        $sdkIdentifier = function_exists('wp_get_wp_version')
+            ? 'wp/ai-gateway-provider-php'
+            : 'ai-gateway-provider-php';
+        $request = $request->withHeader(
+            'User-Agent',
+            $sdkIdentifier . '/' . AiGatewayProvider::VERSION
+        );
+
         return $request;
     }
 }

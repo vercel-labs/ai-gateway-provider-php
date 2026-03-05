@@ -32,6 +32,8 @@ use WordPress\AiClient\Providers\Models\DTO\ModelMetadata;
  */
 class AiGatewayProvider extends AbstractApiProvider
 {
+    public const VERSION = '1.0.0-alpha';
+
     /**
      * {@inheritDoc}
      *
