@@ -8,6 +8,9 @@ use PHPUnit\Framework\TestCase;
 use Vercel\AiGatewayProvider\Provider\AiGatewayProvider;
 use Vercel\AiGatewayProvider\Tests\Traits\IntegrationTestTrait;
 use WordPress\AiClient\AiClient;
+use WordPress\AiClient\Messages\DTO\Message;
+use WordPress\AiClient\Messages\DTO\MessagePart;
+use WordPress\AiClient\Messages\Enums\MessageRoleEnum;
 use WordPress\AiClient\Messages\Enums\ModalityEnum;
 use WordPress\AiClient\Providers\Models\DTO\ModelConfig;
 use WordPress\AiClient\Results\DTO\TokenUsage;
@@ -152,5 +155,56 @@ class TextAndImageGenerationIntegrationTest extends TestCase
         $this->assertTrue($hasImage, 'Response should contain at least one image part.');
 
         $this->assertTokenUsage($modelId, $result->getTokenUsage());
+    }
+
+    /**
+     * @dataProvider provideModels
+     */
+    public function testMultiTurnImageEditing(string $modelId): void
+    {
+        $model = AiGatewayProvider::model($modelId);
+
+        $turn1Message = new Message(
+            MessageRoleEnum::user(),
+            [new MessagePart('Generate an image of a red circle on a white background.')]
+        );
+
+        $turn1Result = AiClient::prompt($turn1Message)
+            ->usingModel($model)
+            ->asOutputModalities(ModalityEnum::text(), ModalityEnum::image())
+            ->generateTextResult();
+
+        $turn1Response = $turn1Result->toMessage();
+
+        $turn1File = null;
+        foreach ($turn1Response->getParts() as $part) {
+            if ($part->getFile() !== null) {
+                $turn1File = $part->getFile();
+                break;
+            }
+        }
+        $this->assertNotNull($turn1File, 'First turn should contain an image.');
+        $this->assertStringStartsWith('image/', $turn1File->getMimeType());
+        $this->saveGeneratedFile($turn1File, "multi-turn-1-{$modelId}");
+
+        $turn2Result = AiClient::prompt()
+            ->usingModel($model)
+            ->withHistory($turn1Message, $turn1Response)
+            ->withText('Change the circle color from red to blue. Keep everything else the same.')
+            ->asOutputModalities(ModalityEnum::text(), ModalityEnum::image())
+            ->generateTextResult();
+
+        $turn2File = null;
+        foreach ($turn2Result->getCandidates()[0]->getMessage()->getParts() as $part) {
+            if ($part->getFile() !== null) {
+                $turn2File = $part->getFile();
+                break;
+            }
+        }
+        $this->assertNotNull($turn2File, 'Second turn should contain an image.');
+        $this->assertStringStartsWith('image/', $turn2File->getMimeType());
+        $this->saveGeneratedFile($turn2File, "multi-turn-2-{$modelId}");
+
+        $this->assertTokenUsage($modelId, $turn2Result->getTokenUsage());
     }
 }
