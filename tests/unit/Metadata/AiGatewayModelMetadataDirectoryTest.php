@@ -370,7 +370,7 @@ class AiGatewayModelMetadataDirectoryTest extends TestCase
             return $option->getName()->value;
         }, $models[0]->getSupportedOptions());
 
-        $this->assertNotContains(OptionEnum::candidateCount()->value, $optionNames);
+        $this->assertContains(OptionEnum::candidateCount()->value, $optionNames);
         $this->assertContains(OptionEnum::outputFileType()->value, $optionNames);
         $this->assertContains(OptionEnum::outputMediaOrientation()->value, $optionNames);
         $this->assertContains(OptionEnum::outputMediaAspectRatio()->value, $optionNames);

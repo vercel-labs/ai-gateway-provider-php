@@ -111,6 +111,7 @@ class AiGatewayModelMetadataDirectory extends AbstractApiBasedModelMetadataDirec
         }
 
         $textOptions = [
+            new SupportedOption(OptionEnum::candidateCount(), [1]),
             new SupportedOption(OptionEnum::systemInstruction()),
             new SupportedOption(OptionEnum::maxTokens()),
             new SupportedOption(OptionEnum::temperature()),
@@ -141,7 +142,7 @@ class AiGatewayModelMetadataDirectory extends AbstractApiBasedModelMetadataDirec
 
         $imageOptions = [
             new SupportedOption(OptionEnum::candidateCount()),
-            new SupportedOption(OptionEnum::outputFileType(), [[FileTypeEnum::inline()]]),
+            new SupportedOption(OptionEnum::outputFileType(), [FileTypeEnum::inline()]),
             new SupportedOption(OptionEnum::outputMediaOrientation()),
             new SupportedOption(OptionEnum::outputMediaAspectRatio()),
             new SupportedOption(OptionEnum::customOptions()),
@@ -157,7 +158,7 @@ class AiGatewayModelMetadataDirectory extends AbstractApiBasedModelMetadataDirec
                 }
             ),
             [
-                new SupportedOption(OptionEnum::outputFileType(), [[FileTypeEnum::inline()]]),
+                new SupportedOption(OptionEnum::outputFileType(), [FileTypeEnum::inline()]),
                 new SupportedOption(OptionEnum::outputMediaOrientation()),
                 new SupportedOption(OptionEnum::outputMediaAspectRatio()),
                 new SupportedOption(OptionEnum::outputModalities(), [

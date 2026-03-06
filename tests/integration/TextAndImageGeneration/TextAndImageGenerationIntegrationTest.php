@@ -93,6 +93,7 @@ class TextAndImageGenerationIntegrationTest extends TestCase
      */
     public function testImageOnlyOutputWithOptions(string $modelId): void
     {
+        // TODO: Replace this with `asOutputMediaAspectRatio('1:1')` once that option is supported by the framework.
         $config = ModelConfig::fromArray([
             'outputMediaAspectRatio' => '4:1',
         ]);

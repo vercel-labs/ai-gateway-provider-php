@@ -80,23 +80,22 @@ class ImageGenerationIntegrationTest extends TestCase
      */
     public function testGenerationWithOptions(string $modelId): void
     {
+        // TODO: Replace this with `asOutputMediaAspectRatio('1:1')` once that option is supported by the framework.
         $config = ModelConfig::fromArray([
             'outputMediaAspectRatio' => '1:1',
         ]);
 
-        $promptBuilder = AiClient::prompt('A blue square on a white background.')
-            ->usingModel(AiGatewayProvider::model($modelId))
-            ->usingModelConfig($config);
-
         $isGemini = str_starts_with($modelId, 'gemini-');
-        if (!$isGemini) {
-            $promptBuilder = $promptBuilder->usingCandidateCount(2);
-        }
+        $candidateCount = $isGemini ? 1 : 2;
 
-        $result = $promptBuilder->generateImageResult();
+        $result = AiClient::prompt('A blue square on a white background.')
+            ->usingModel(AiGatewayProvider::model($modelId))
+            ->usingModelConfig($config)
+            ->usingCandidateCount($candidateCount)
+            ->generateImageResult();
 
         $candidates = $result->getCandidates();
-        $this->assertCount($isGemini ? 1 : 2, $candidates);
+        $this->assertCount($candidateCount, $candidates);
 
         foreach ($candidates as $index => $candidate) {
             $parts = $candidate->getMessage()->getParts();
