@@ -9,6 +9,7 @@ use Vercel\AiGatewayProvider\Provider\AiGatewayProvider;
 use Vercel\AiGatewayProvider\Tests\Traits\IntegrationTestTrait;
 use WordPress\AiClient\AiClient;
 use WordPress\AiClient\Providers\Models\DTO\ModelConfig;
+use WordPress\AiClient\Results\DTO\TokenUsage;
 
 /**
  * @group integration
@@ -37,6 +38,19 @@ class ImageGenerationIntegrationTest extends TestCase
         ];
     }
 
+    protected function assertTokenUsage(string $modelId, TokenUsage $tokenUsage): void
+    {
+        if (str_starts_with($modelId, 'imagen-') || str_starts_with($modelId, 'grok-')) {
+            // Google's Imagen models and xAI's Grok Imagine Image model don't return token usage data.
+            $message = 'Google and xAI do not return token usage data for image generation. Maybe that just changed?';
+            $this->assertSame(0, $tokenUsage->getPromptTokens(), $message);
+            $this->assertSame(0, $tokenUsage->getCompletionTokens(), $message);
+        } else {
+            $this->assertGreaterThan(0, $tokenUsage->getPromptTokens());
+            $this->assertGreaterThan(0, $tokenUsage->getCompletionTokens());
+        }
+    }
+
     /**
      * @dataProvider provideModels
      */
@@ -57,6 +71,8 @@ class ImageGenerationIntegrationTest extends TestCase
         $this->assertSame('image/png', $file->getMimeType());
 
         $this->saveGeneratedFile($file, "basic-{$modelId}");
+
+        $this->assertTokenUsage($modelId, $result->getTokenUsage());
     }
 
     /**
@@ -87,5 +103,7 @@ class ImageGenerationIntegrationTest extends TestCase
 
             $this->saveGeneratedFile($file, "options-{$modelId}-{$index}");
         }
+
+        $this->assertTokenUsage($modelId, $result->getTokenUsage());
     }
 }

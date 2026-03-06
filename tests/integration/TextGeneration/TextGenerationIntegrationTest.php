@@ -11,6 +11,7 @@ use WordPress\AiClient\AiClient;
 use WordPress\AiClient\Messages\DTO\Message;
 use WordPress\AiClient\Messages\DTO\MessagePart;
 use WordPress\AiClient\Messages\Enums\MessageRoleEnum;
+use WordPress\AiClient\Results\DTO\TokenUsage;
 use WordPress\AiClient\Tools\DTO\FunctionCall;
 use WordPress\AiClient\Tools\DTO\FunctionDeclaration;
 use WordPress\AiClient\Tools\DTO\FunctionResponse;
@@ -43,6 +44,12 @@ class TextGenerationIntegrationTest extends TestCase
         ];
     }
 
+    protected function assertTokenUsage(string $modelId, TokenUsage $tokenUsage): void
+    {
+        $this->assertGreaterThan(0, $tokenUsage->getPromptTokens());
+        $this->assertGreaterThan(0, $tokenUsage->getCompletionTokens());
+    }
+
     /**
      * @dataProvider provideModels
      */
@@ -60,9 +67,7 @@ class TextGenerationIntegrationTest extends TestCase
         $this->assertNotEmpty($text);
         $this->assertStringContainsStringIgnoringCase('Paris', $text);
 
-        $tokenUsage = $result->getTokenUsage();
-        $this->assertGreaterThan(0, $tokenUsage->getPromptTokens());
-        $this->assertGreaterThan(0, $tokenUsage->getCompletionTokens());
+        $this->assertTokenUsage($modelId, $result->getTokenUsage());
     }
 
     /**
@@ -79,9 +84,7 @@ class TextGenerationIntegrationTest extends TestCase
         $this->assertCount(1, $result->getCandidates());
         $this->assertNotEmpty($result->toText());
 
-        $tokenUsage = $result->getTokenUsage();
-        $this->assertGreaterThan(0, $tokenUsage->getPromptTokens());
-        $this->assertGreaterThan(0, $tokenUsage->getCompletionTokens());
+        $this->assertTokenUsage($modelId, $result->getTokenUsage());
     }
 
     /**
@@ -103,6 +106,8 @@ class TextGenerationIntegrationTest extends TestCase
         $this->assertNotNull($text);
         $this->assertNotEmpty($text);
         $this->assertStringContainsStringIgnoringCase('Spaniel', $text);
+
+        $this->assertTokenUsage($modelId, $result->getTokenUsage());
     }
 
     /**
@@ -156,6 +161,8 @@ class TextGenerationIntegrationTest extends TestCase
         $text = $candidates[0]->getMessage()->getParts()[0]->getText();
         $this->assertNotNull($text);
         $this->assertStringContainsString('42', $text);
+
+        $this->assertTokenUsage($modelId, $turn3Result->getTokenUsage());
     }
 
     /**
@@ -203,6 +210,8 @@ class TextGenerationIntegrationTest extends TestCase
             $this->assertNotEmpty($actor['name']);
             $this->assertNotEmpty($actor['birthday']);
         }
+
+        $this->assertTokenUsage($modelId, $result->getTokenUsage());
     }
 
     /**
@@ -269,5 +278,7 @@ class TextGenerationIntegrationTest extends TestCase
         $text = $turn2Result->toText();
         $this->assertNotEmpty($text);
         $this->assertStringContainsStringIgnoringCase('Austin', $text);
+
+        $this->assertTokenUsage($modelId, $turn2Result->getTokenUsage());
     }
 }
