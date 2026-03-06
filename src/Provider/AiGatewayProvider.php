@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Vercel\AiGatewayProvider\Provider;
 
 use Vercel\AiGatewayProvider\Metadata\AiGatewayModelMetadataDirectory;
+use Vercel\AiGatewayProvider\Models\AiGatewayImageGenerationModel;
 use Vercel\AiGatewayProvider\Models\AiGatewayTextGenerationModel;
 use WordPress\AiClient\AiClient;
 use WordPress\AiClient\Providers\ApiBasedImplementation\AbstractApiProvider;
@@ -56,6 +57,16 @@ class AiGatewayProvider extends AbstractApiProvider
         /** @var AiGatewayModelMetadataDirectory $directory */
         $directory = static::modelMetadataDirectory();
         $gatewayModelId = $directory->getGatewayModelId($modelMetadata->getId());
+
+        foreach ($modelMetadata->getSupportedCapabilities() as $capability) {
+            if ($capability->isImageGeneration()) {
+                return new AiGatewayImageGenerationModel(
+                    $modelMetadata,
+                    $providerMetadata,
+                    $gatewayModelId
+                );
+            }
+        }
 
         return new AiGatewayTextGenerationModel(
             $modelMetadata,

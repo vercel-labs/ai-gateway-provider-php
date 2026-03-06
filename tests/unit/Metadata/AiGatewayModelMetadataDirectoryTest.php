@@ -41,6 +41,19 @@ class AiGatewayModelMetadataDirectoryTest extends TestCase
         );
     }
 
+    private function makeImageModel(array $overrides = []): array
+    {
+        return array_merge(
+            [
+                'id' => 'openai/gpt-image-1',
+                'name' => 'GPT Image 1',
+                'modelType' => 'image',
+                'specification' => ['modelId' => 'openai/gpt-image-1'],
+            ],
+            $overrides
+        );
+    }
+
     public function testGetRequestAuthenticationReturnsAiGatewayType(): void
     {
         $directory = $this->createDirectory(
@@ -77,25 +90,67 @@ class AiGatewayModelMetadataDirectoryTest extends TestCase
         $this->assertContains('gpt-4o', $ids);
     }
 
-    public function testListModelMetadataFiltersNonLanguageModels(): void
+    public function testListModelMetadataIncludesLanguageAndImageModels(): void
     {
         $directory = $this->createDirectory($this->createConfigResponse([
             $this->makeLanguageModel([
                 'id' => 'anthropic/claude-sonnet-4-6',
                 'specification' => ['modelId' => 'anthropic/claude-sonnet-4-6'],
             ]),
-            $this->makeLanguageModel([
-                'id' => 'some-provider/image-model',
-                'name' => 'Image Model',
-                'modelType' => 'image',
-                'specification' => ['modelId' => 'some-provider/image-model'],
+            $this->makeImageModel([
+                'id' => 'openai/gpt-image-1',
+                'name' => 'GPT Image 1',
+                'specification' => ['modelId' => 'openai/gpt-image-1'],
             ]),
+        ]));
+
+        $models = $directory->listModelMetadata();
+
+        $this->assertCount(2, $models);
+        $ids = array_map(function ($m) {
+            return $m->getId();
+        }, $models);
+        $this->assertContains('claude-sonnet-4-6', $ids);
+        $this->assertContains('gpt-image-1', $ids);
+    }
+
+    public function testListModelMetadataFiltersUnsupportedModelTypes(): void
+    {
+        $directory = $this->createDirectory($this->createConfigResponse([
+            $this->makeLanguageModel([
+                'id' => 'anthropic/claude-sonnet-4-6',
+                'specification' => ['modelId' => 'anthropic/claude-sonnet-4-6'],
+            ]),
+            [
+                'id' => 'some-provider/video-model',
+                'name' => 'Video Model',
+                'modelType' => 'video',
+                'specification' => ['modelId' => 'some-provider/video-model'],
+            ],
         ]));
 
         $models = $directory->listModelMetadata();
 
         $this->assertCount(1, $models);
         $this->assertSame('claude-sonnet-4-6', $models[0]->getId());
+    }
+
+    public function testListModelMetadataIncludesImageModelsWithCorrectCapability(): void
+    {
+        $directory = $this->createDirectory($this->createConfigResponse([
+            $this->makeImageModel([
+                'id' => 'openai/gpt-image-1',
+                'name' => 'GPT Image 1',
+                'specification' => ['modelId' => 'openai/gpt-image-1'],
+            ]),
+        ]));
+
+        $models = $directory->listModelMetadata();
+
+        $this->assertCount(1, $models);
+        $capabilities = $models[0]->getSupportedCapabilities();
+        $this->assertCount(1, $capabilities);
+        $this->assertTrue($capabilities[0]->isImageGeneration());
     }
 
     public function testListModelMetadataSkipsModelsWithoutModelId(): void

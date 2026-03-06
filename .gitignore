@@ -1,3 +1,4 @@
+tests/output
 tools/output
 vendor
 .env

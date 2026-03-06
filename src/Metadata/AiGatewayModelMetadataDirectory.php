@@ -15,6 +15,7 @@ namespace Vercel\AiGatewayProvider\Metadata;
 use Vercel\AiGatewayProvider\Authentication\AiGatewayRequestAuthentication;
 use Vercel\AiGatewayProvider\Provider\AiGatewayProvider;
 use WordPress\AiClient\Common\Exception\InvalidArgumentException;
+use WordPress\AiClient\Files\Enums\FileTypeEnum;
 use WordPress\AiClient\Messages\Enums\ModalityEnum;
 use WordPress\AiClient\Providers\ApiBasedImplementation\AbstractApiBasedModelMetadataDirectory;
 use WordPress\AiClient\Providers\Http\Contracts\RequestAuthenticationInterface;
@@ -109,7 +110,7 @@ class AiGatewayModelMetadataDirectory extends AbstractApiBasedModelMetadataDirec
             return [];
         }
 
-        $options = [
+        $languageOptions = [
             new SupportedOption(OptionEnum::systemInstruction()),
             new SupportedOption(OptionEnum::maxTokens()),
             new SupportedOption(OptionEnum::temperature()),
@@ -138,10 +139,34 @@ class AiGatewayModelMetadataDirectory extends AbstractApiBasedModelMetadataDirec
             new SupportedOption(OptionEnum::outputModalities(), [[ModalityEnum::text()]]),
         ];
 
+        $imageOptions = [
+            new SupportedOption(OptionEnum::candidateCount()),
+            new SupportedOption(OptionEnum::outputFileType(), [[FileTypeEnum::inline()]]),
+            new SupportedOption(OptionEnum::outputMediaOrientation()),
+            new SupportedOption(OptionEnum::outputMediaAspectRatio()),
+            new SupportedOption(OptionEnum::customOptions()),
+            new SupportedOption(OptionEnum::inputModalities(), [[ModalityEnum::text()]]),
+            new SupportedOption(OptionEnum::outputModalities(), [[ModalityEnum::image()]]),
+        ];
+
         $modelsMetadata = [];
         foreach ($data['models'] as $model) {
-            if (!isset($model['modelType']) || $model['modelType'] !== 'language') {
+            if (!isset($model['modelType'])) {
                 continue;
+            }
+
+            $modelType = $model['modelType'];
+            switch ($modelType) {
+                case 'language':
+                    $capabilities = [CapabilityEnum::textGeneration()];
+                    $options = $languageOptions;
+                    break;
+                case 'image':
+                    $capabilities = [CapabilityEnum::imageGeneration()];
+                    $options = $imageOptions;
+                    break;
+                default:
+                    continue 2;
             }
 
             if (!isset($model['specification']['modelId'])) {
@@ -161,7 +186,7 @@ class AiGatewayModelMetadataDirectory extends AbstractApiBasedModelMetadataDirec
             $modelsMetadata[] = new ModelMetadata(
                 $flatId,
                 $name,
-                [CapabilityEnum::textGeneration()],
+                $capabilities,
                 $options
             );
         }
