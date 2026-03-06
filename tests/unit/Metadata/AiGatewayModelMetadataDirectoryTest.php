@@ -10,7 +10,11 @@ use Vercel\AiGatewayProvider\Metadata\AiGatewayModelMetadataDirectory;
 use Vercel\AiGatewayProvider\Tests\Mocks\MockHttpTransporter;
 use WordPress\AiClient\Common\Exception\InvalidArgumentException;
 use WordPress\AiClient\Providers\Http\DTO\ApiKeyRequestAuthentication;
+use WordPress\AiClient\Messages\Enums\ModalityEnum;
 use WordPress\AiClient\Providers\Http\DTO\Response;
+use WordPress\AiClient\Providers\Models\DTO\ModelMetadata;
+use WordPress\AiClient\Providers\Models\DTO\SupportedOption;
+use WordPress\AiClient\Providers\Models\Enums\OptionEnum;
 
 class AiGatewayModelMetadataDirectoryTest extends TestCase
 {
@@ -238,5 +242,100 @@ class AiGatewayModelMetadataDirectoryTest extends TestCase
         $models = $directory->listModelMetadata();
 
         $this->assertSame([], $models);
+    }
+
+    public function testGeminiImageModelGetsExpandedOutputModalities(): void
+    {
+        $directory = $this->createDirectory($this->createConfigResponse([
+            $this->makeLanguageModel([
+                'id' => 'google/gemini-2.5-flash-preview-image',
+                'name' => 'Gemini 2.5 Flash Preview Image',
+                'specification' => ['modelId' => 'google/gemini-2.5-flash-preview-image'],
+            ]),
+        ]));
+
+        $models = $directory->listModelMetadata();
+
+        $this->assertCount(1, $models);
+        $outputModalitiesOption = $this->findOutputModalitiesOption($models[0]);
+        $this->assertNotNull($outputModalitiesOption);
+
+        $values = $outputModalitiesOption->getSupportedValues();
+        $this->assertCount(3, $values);
+        $this->assertTrue($outputModalitiesOption->isSupportedValue([ModalityEnum::text()]));
+        $this->assertTrue($outputModalitiesOption->isSupportedValue([ModalityEnum::image()]));
+        $this->assertTrue($outputModalitiesOption->isSupportedValue([ModalityEnum::image(), ModalityEnum::text()]));
+    }
+
+    public function testGeminiImageModelWithMiddlePatternGetsExpandedOutputModalities(): void
+    {
+        $directory = $this->createDirectory($this->createConfigResponse([
+            $this->makeLanguageModel([
+                'id' => 'google/gemini-2.0-flash-image-generation',
+                'name' => 'Gemini 2.0 Flash Image Generation',
+                'specification' => ['modelId' => 'google/gemini-2.0-flash-image-generation'],
+            ]),
+        ]));
+
+        $models = $directory->listModelMetadata();
+
+        $this->assertCount(1, $models);
+        $outputModalitiesOption = $this->findOutputModalitiesOption($models[0]);
+        $this->assertNotNull($outputModalitiesOption);
+
+        $values = $outputModalitiesOption->getSupportedValues();
+        $this->assertCount(3, $values);
+    }
+
+    public function testRegularGeminiModelKeepsTextOnlyOutputModalities(): void
+    {
+        $directory = $this->createDirectory($this->createConfigResponse([
+            $this->makeLanguageModel([
+                'id' => 'google/gemini-2.0-flash',
+                'name' => 'Gemini 2.0 Flash',
+                'specification' => ['modelId' => 'google/gemini-2.0-flash'],
+            ]),
+        ]));
+
+        $models = $directory->listModelMetadata();
+
+        $this->assertCount(1, $models);
+        $outputModalitiesOption = $this->findOutputModalitiesOption($models[0]);
+        $this->assertNotNull($outputModalitiesOption);
+
+        $values = $outputModalitiesOption->getSupportedValues();
+        $this->assertCount(1, $values);
+        $this->assertTrue($outputModalitiesOption->isSupportedValue([ModalityEnum::text()]));
+        $this->assertFalse($outputModalitiesOption->isSupportedValue([ModalityEnum::image()]));
+    }
+
+    public function testNonGoogleModelKeepsTextOnlyOutputModalities(): void
+    {
+        $directory = $this->createDirectory($this->createConfigResponse([
+            $this->makeLanguageModel([
+                'id' => 'anthropic/claude-sonnet-4-6',
+                'specification' => ['modelId' => 'anthropic/claude-sonnet-4-6'],
+            ]),
+        ]));
+
+        $models = $directory->listModelMetadata();
+
+        $this->assertCount(1, $models);
+        $outputModalitiesOption = $this->findOutputModalitiesOption($models[0]);
+        $this->assertNotNull($outputModalitiesOption);
+
+        $values = $outputModalitiesOption->getSupportedValues();
+        $this->assertCount(1, $values);
+        $this->assertTrue($outputModalitiesOption->isSupportedValue([ModalityEnum::text()]));
+    }
+
+    private function findOutputModalitiesOption(ModelMetadata $model): ?SupportedOption
+    {
+        foreach ($model->getSupportedOptions() as $option) {
+            if ($option->getName()->value === OptionEnum::outputModalities()->value) {
+                return $option;
+            }
+        }
+        return null;
     }
 }

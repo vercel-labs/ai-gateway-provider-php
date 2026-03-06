@@ -16,6 +16,7 @@ use Vercel\AiGatewayProvider\Metadata\AiGatewayModelMetadataDirectory;
 use Vercel\AiGatewayProvider\Models\AiGatewayImageGenerationModel;
 use Vercel\AiGatewayProvider\Models\AiGatewayTextGenerationModel;
 use WordPress\AiClient\AiClient;
+use WordPress\AiClient\Common\Exception\RuntimeException;
 use WordPress\AiClient\Providers\ApiBasedImplementation\AbstractApiProvider;
 use WordPress\AiClient\Providers\ApiBasedImplementation\ListModelsApiBasedProviderAvailability;
 use WordPress\AiClient\Providers\Contracts\ModelMetadataDirectoryInterface;
@@ -57,8 +58,16 @@ class AiGatewayProvider extends AbstractApiProvider
         /** @var AiGatewayModelMetadataDirectory $directory */
         $directory = static::modelMetadataDirectory();
         $gatewayModelId = $directory->getGatewayModelId($modelMetadata->getId());
+        $capabilities = $modelMetadata->getSupportedCapabilities();
 
-        foreach ($modelMetadata->getSupportedCapabilities() as $capability) {
+        foreach ($capabilities as $capability) {
+            if ($capability->isTextGeneration()) {
+                return new AiGatewayTextGenerationModel(
+                    $modelMetadata,
+                    $providerMetadata,
+                    $gatewayModelId
+                );
+            }
             if ($capability->isImageGeneration()) {
                 return new AiGatewayImageGenerationModel(
                     $modelMetadata,
@@ -68,10 +77,8 @@ class AiGatewayProvider extends AbstractApiProvider
             }
         }
 
-        return new AiGatewayTextGenerationModel(
-            $modelMetadata,
-            $providerMetadata,
-            $gatewayModelId
+        throw new RuntimeException(
+            'Unsupported model capabilities: ' . implode(', ', $capabilities)
         );
     }
 

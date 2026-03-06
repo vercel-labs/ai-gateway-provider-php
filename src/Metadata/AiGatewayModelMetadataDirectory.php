@@ -110,7 +110,7 @@ class AiGatewayModelMetadataDirectory extends AbstractApiBasedModelMetadataDirec
             return [];
         }
 
-        $languageOptions = [
+        $textOptions = [
             new SupportedOption(OptionEnum::systemInstruction()),
             new SupportedOption(OptionEnum::maxTokens()),
             new SupportedOption(OptionEnum::temperature()),
@@ -149,24 +149,26 @@ class AiGatewayModelMetadataDirectory extends AbstractApiBasedModelMetadataDirec
             new SupportedOption(OptionEnum::outputModalities(), [[ModalityEnum::image()]]),
         ];
 
+        $textAndImageOptions = array_merge(
+            array_filter(
+                $textOptions,
+                static function (SupportedOption $option): bool {
+                    return $option->getName() !== OptionEnum::outputModalities();
+                }
+            ),
+            [
+                new SupportedOption(OptionEnum::outputModalities(), [
+                    [ModalityEnum::text()],
+                    [ModalityEnum::image()],
+                    [ModalityEnum::image(), ModalityEnum::text()],
+                ]),
+            ]
+        );
+
         $modelsMetadata = [];
         foreach ($data['models'] as $model) {
             if (!isset($model['modelType'])) {
                 continue;
-            }
-
-            $modelType = $model['modelType'];
-            switch ($modelType) {
-                case 'language':
-                    $capabilities = [CapabilityEnum::textGeneration()];
-                    $options = $languageOptions;
-                    break;
-                case 'image':
-                    $capabilities = [CapabilityEnum::imageGeneration()];
-                    $options = $imageOptions;
-                    break;
-                default:
-                    continue 2;
             }
 
             if (!isset($model['specification']['modelId'])) {
@@ -180,6 +182,36 @@ class AiGatewayModelMetadataDirectory extends AbstractApiBasedModelMetadataDirec
             $flatId = $slashPos !== false ? substr($specModelId, $slashPos + 1) : $specModelId;
 
             $name = $model['name'] ?? $flatId;
+
+            $modelType = $model['modelType'];
+            switch ($modelType) {
+                case 'language':
+                    if (
+                        str_starts_with($flatId, 'gemini-')
+                        && (str_contains($flatId, '-image-') || str_ends_with($flatId, '-image'))
+                    ) {
+                        $capabilities = [CapabilityEnum::textGeneration()];
+                        $options = $textAndImageOptions;
+                    } else {
+                        $capabilities = [CapabilityEnum::textGeneration()];
+                        $options = $textOptions;
+                    }
+                    break;
+                case 'image':
+                    $capabilities = [CapabilityEnum::imageGeneration()];
+                    $options = $imageOptions;
+                    break;
+                default:
+                    continue 2;
+            }
+
+            if (
+                $modelType === 'language'
+                && str_starts_with($flatId, 'gemini-')
+                && (str_contains($flatId, '-image-') || str_ends_with($flatId, '-image'))
+            ) {
+                $options = $textAndImageOptions;
+            }
 
             $this->gatewayModelIdMap[$flatId] = $gatewayId;
 

@@ -12,6 +12,7 @@ use WordPress\AiClient\Files\DTO\File;
 use WordPress\AiClient\Messages\DTO\Message;
 use WordPress\AiClient\Messages\DTO\MessagePart;
 use WordPress\AiClient\Messages\Enums\MessageRoleEnum;
+use WordPress\AiClient\Messages\Enums\ModalityEnum;
 use WordPress\AiClient\Providers\DTO\ProviderMetadata;
 use WordPress\AiClient\Providers\Enums\ProviderTypeEnum;
 use WordPress\AiClient\Providers\Http\DTO\ApiKeyRequestAuthentication;
@@ -753,6 +754,144 @@ class AiGatewayTextGenerationModelTest extends TestCase
         $this->assertSame('call_weather_1', $messages[2]['content'][0]['toolCallId']);
 
         $this->assertSame('The weather in Paris is 18°C.', $result2->toText());
+    }
+
+    private function createModelWithGatewayId(MockHttpTransporter $transporter, string $gatewayModelId): AiGatewayTextGenerationModel
+    {
+        $metadata = new ModelMetadata(
+            'test-model',
+            'Test Model',
+            [],
+            []
+        );
+        $providerMetadata = new ProviderMetadata(
+            'ai_gateway',
+            'AI Gateway',
+            ProviderTypeEnum::cloud()
+        );
+
+        $model = new AiGatewayTextGenerationModel(
+            $metadata,
+            $providerMetadata,
+            $gatewayModelId
+        );
+
+        $model->setHttpTransporter($transporter);
+        $model->setRequestAuthentication(new ApiKeyRequestAuthentication(self::API_KEY));
+
+        return $model;
+    }
+
+    public function testRequestBodyIncludesResponseModalitiesForMultimodalOutput(): void
+    {
+        $transporter = new MockHttpTransporter($this->createMockResponse());
+        $model = $this->createModelWithGatewayId($transporter, 'google/gemini-2.5-flash-preview-image');
+
+        $config = ModelConfig::fromArray([
+            'outputModalities' => ['image', 'text'],
+        ]);
+        $model->setConfig($config);
+
+        $model->generateTextResult($this->createSimplePrompt());
+
+        $body = $transporter->getLastRequest()->getData();
+        $this->assertArrayHasKey('providerOptions', $body);
+        $this->assertSame(
+            ['google' => ['responseModalities' => ['IMAGE', 'TEXT']]],
+            $body['providerOptions']
+        );
+    }
+
+    public function testRequestBodyOmitsResponseModalitiesForTextOnly(): void
+    {
+        $transporter = new MockHttpTransporter($this->createMockResponse());
+        $model = $this->createModelWithGatewayId($transporter, 'google/gemini-2.5-flash-preview-image');
+
+        $config = ModelConfig::fromArray([
+            'outputModalities' => ['text'],
+        ]);
+        $model->setConfig($config);
+
+        $model->generateTextResult($this->createSimplePrompt());
+
+        $body = $transporter->getLastRequest()->getData();
+        $this->assertArrayNotHasKey('providerOptions', $body);
+    }
+
+    public function testRequestBodyOmitsResponseModalitiesWhenNull(): void
+    {
+        $transporter = new MockHttpTransporter($this->createMockResponse());
+        $model = $this->createModel($transporter);
+
+        $model->generateTextResult($this->createSimplePrompt());
+
+        $body = $transporter->getLastRequest()->getData();
+        $this->assertArrayNotHasKey('providerOptions', $body);
+    }
+
+    public function testParseResponseWithFileContentPart(): void
+    {
+        $base64Data = base64_encode('fake-image-data');
+        $response = new Response(
+            200,
+            ['Content-Type' => 'application/json'],
+            json_encode([
+                'content' => [
+                    [
+                        'type' => 'file',
+                        'data' => 'data:image/png;base64,' . $base64Data,
+                        'mediaType' => 'image/png',
+                    ],
+                ],
+                'finishReason' => ['unified' => 'stop'],
+                'usage' => ['promptTokens' => 10, 'completionTokens' => 5],
+            ])
+        );
+        $transporter = new MockHttpTransporter($response);
+        $model = $this->createModel($transporter);
+
+        $result = $model->generateTextResult($this->createSimplePrompt());
+
+        $parts = $result->toMessage()->getParts();
+        $this->assertCount(1, $parts);
+
+        $file = $parts[0]->getFile();
+        $this->assertNotNull($file);
+        $this->assertSame('image/png', $file->getMimeType());
+    }
+
+    public function testParseResponseWithMixedTextAndFileContentParts(): void
+    {
+        $base64Data = base64_encode('fake-image-data');
+        $response = new Response(
+            200,
+            ['Content-Type' => 'application/json'],
+            json_encode([
+                'content' => [
+                    ['type' => 'text', 'text' => 'Here is the image:'],
+                    [
+                        'type' => 'file',
+                        'data' => 'data:image/png;base64,' . $base64Data,
+                        'mediaType' => 'image/png',
+                    ],
+                ],
+                'finishReason' => ['unified' => 'stop'],
+                'usage' => ['promptTokens' => 10, 'completionTokens' => 5],
+            ])
+        );
+        $transporter = new MockHttpTransporter($response);
+        $model = $this->createModel($transporter);
+
+        $result = $model->generateTextResult($this->createSimplePrompt());
+
+        $parts = $result->toMessage()->getParts();
+        $this->assertCount(2, $parts);
+
+        $this->assertSame('Here is the image:', $parts[0]->getText());
+
+        $file = $parts[1]->getFile();
+        $this->assertNotNull($file);
+        $this->assertSame('image/png', $file->getMimeType());
     }
 
     public function testTokenUsageMissingReturnsZeros(): void

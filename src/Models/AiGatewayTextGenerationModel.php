@@ -14,9 +14,11 @@ namespace Vercel\AiGatewayProvider\Models;
 
 use Vercel\AiGatewayProvider\Authentication\AiGatewayRequestAuthentication;
 use Vercel\AiGatewayProvider\Provider\AiGatewayProvider;
+use WordPress\AiClient\Files\DTO\File;
 use WordPress\AiClient\Messages\DTO\Message;
 use WordPress\AiClient\Messages\DTO\MessagePart;
 use WordPress\AiClient\Messages\Enums\MessageRoleEnum;
+use WordPress\AiClient\Messages\Enums\ModalityEnum;
 use WordPress\AiClient\Providers\ApiBasedImplementation\AbstractApiBasedModel;
 use WordPress\AiClient\Providers\DTO\ProviderMetadata;
 use WordPress\AiClient\Providers\Http\Contracts\RequestAuthenticationInterface;
@@ -44,7 +46,9 @@ use WordPress\AiClient\Tools\DTO\FunctionDeclaration;
  *     text?: string,
  *     toolCallId?: string,
  *     toolName?: string,
- *     input?: mixed
+ *     input?: mixed,
+ *     data?: string,
+ *     mediaType?: string
  * }
  * @phpstan-type ResponseData array{
  *     content?: ResponseContentPart|list<ResponseContentPart>,
@@ -251,6 +255,27 @@ class AiGatewayTextGenerationModel extends AbstractApiBasedModel implements Text
             $body[$key] = $value;
         }
 
+        $outputModalities = $config->getOutputModalities();
+        if (is_array($outputModalities) && count($outputModalities) > 0) {
+            $isDefaultTextOnly = count($outputModalities) === 1 && $outputModalities[0]->isText();
+            if (!$isDefaultTextOnly) {
+                $modalityStrings = array_map(
+                    static function (ModalityEnum $modality): string {
+                        return strtoupper($modality->value);
+                    },
+                    $outputModalities
+                );
+
+                $slashPos = strpos($this->gatewayModelId, '/');
+                if ($slashPos !== false) {
+                    $provider = substr($this->gatewayModelId, 0, $slashPos);
+                    $body['providerOptions'] = [
+                        $provider => ['responseModalities' => $modalityStrings],
+                    ];
+                }
+            }
+        }
+
         return $body;
     }
 
@@ -405,6 +430,8 @@ class AiGatewayTextGenerationModel extends AbstractApiBasedModel implements Text
 
             if ($contentPart['type'] === 'text' && isset($contentPart['text'])) {
                 $parts[] = new MessagePart($contentPart['text']);
+            } elseif ($contentPart['type'] === 'file' && isset($contentPart['data'], $contentPart['mediaType'])) {
+                $parts[] = new MessagePart(new File($contentPart['data'], $contentPart['mediaType']));
             } elseif ($contentPart['type'] === 'tool-call') {
                 $rawInput = $contentPart['input'] ?? null;
                 $parts[] = new MessagePart(
