@@ -60,7 +60,7 @@ class TextGenerationIntegrationTest extends TestCase
             ->generateTextResult();
 
         $candidates = $result->getCandidates();
-        $this->assertNotEmpty($candidates);
+        $this->assertCount(1, $candidates);
 
         $text = $candidates[0]->getMessage()->getParts()[0]->getText();
         $this->assertNotNull($text);
@@ -156,7 +156,7 @@ class TextGenerationIntegrationTest extends TestCase
             ->generateTextResult();
 
         $candidates = $turn3Result->getCandidates();
-        $this->assertNotEmpty($candidates);
+        $this->assertCount(1, $candidates);
 
         $text = $candidates[0]->getMessage()->getParts()[0]->getText();
         $this->assertNotNull($text);

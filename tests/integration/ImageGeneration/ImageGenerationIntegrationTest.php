@@ -61,7 +61,7 @@ class ImageGenerationIntegrationTest extends TestCase
             ->generateImageResult();
 
         $candidates = $result->getCandidates();
-        $this->assertNotEmpty($candidates);
+        $this->assertCount(1, $candidates);
 
         $parts = $candidates[0]->getMessage()->getParts();
         $this->assertNotEmpty($parts);
