@@ -12,6 +12,7 @@ use WordPress\AiClient\Providers\Models\DTO\ModelConfig;
 
 /**
  * @group integration
+ * @group image-generation
  * @coversNothing
  */
 class ImageGenerationIntegrationTest extends TestCase

@@ -25,6 +25,9 @@ use WordPress\AiClient\Tools\DTO\FunctionCall;
 use WordPress\AiClient\Tools\DTO\FunctionDeclaration;
 use WordPress\AiClient\Tools\DTO\FunctionResponse;
 
+/**
+ * @group text-generation
+ */
 class AiGatewayTextGenerationModelTest extends TestCase
 {
     private const GATEWAY_MODEL_ID = 'anthropic/claude-sonnet-4-6';

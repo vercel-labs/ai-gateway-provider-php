@@ -17,6 +17,7 @@ use WordPress\AiClient\Tools\DTO\FunctionResponse;
 
 /**
  * @group integration
+ * @group text-generation
  * @coversNothing
  */
 class TextGenerationIntegrationTest extends TestCase

@@ -21,6 +21,9 @@ use WordPress\AiClient\Providers\Models\DTO\ModelConfig;
 use WordPress\AiClient\Providers\Models\DTO\ModelMetadata;
 use WordPress\AiClient\Results\DTO\GenerativeAiResult;
 
+/**
+ * @group image-generation
+ */
 class AiGatewayImageGenerationModelTest extends TestCase
 {
     private const GATEWAY_MODEL_ID = 'openai/gpt-image-1';
