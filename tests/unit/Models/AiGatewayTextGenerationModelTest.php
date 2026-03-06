@@ -807,6 +807,86 @@ class AiGatewayTextGenerationModelTest extends TestCase
         );
     }
 
+    public function testRequestBodyIncludesImageConfigWithAspectRatio(): void
+    {
+        $transporter = new MockHttpTransporter($this->createMockResponse());
+        $model = $this->createModelWithGatewayId($transporter, 'google/gemini-2.5-flash-preview-image');
+
+        $config = ModelConfig::fromArray([
+            'outputModalities' => ['image', 'text'],
+            'outputMediaAspectRatio' => '16:9',
+        ]);
+        $model->setConfig($config);
+
+        $model->generateTextResult($this->createSimplePrompt());
+
+        $body = $transporter->getLastRequest()->getData();
+        $this->assertArrayHasKey('providerOptions', $body);
+        $this->assertSame(
+            ['IMAGE', 'TEXT'],
+            $body['providerOptions']['google']['responseModalities']
+        );
+        $this->assertSame(
+            ['aspectRatio' => '16:9'],
+            $body['providerOptions']['google']['imageConfig']
+        );
+    }
+
+    public function testRequestBodyIncludesImageConfigFromOrientationFallback(): void
+    {
+        $transporter = new MockHttpTransporter($this->createMockResponse());
+        $model = $this->createModelWithGatewayId($transporter, 'google/gemini-2.5-flash-preview-image');
+
+        $config = ModelConfig::fromArray([
+            'outputModalities' => ['image', 'text'],
+            'outputMediaOrientation' => 'landscape',
+        ]);
+        $model->setConfig($config);
+
+        $model->generateTextResult($this->createSimplePrompt());
+
+        $body = $transporter->getLastRequest()->getData();
+        $this->assertSame(
+            ['aspectRatio' => '16:9'],
+            $body['providerOptions']['google']['imageConfig']
+        );
+    }
+
+    public function testRequestBodyOmitsImageConfigWithoutImageModality(): void
+    {
+        $transporter = new MockHttpTransporter($this->createMockResponse());
+        $model = $this->createModelWithGatewayId($transporter, 'google/gemini-2.5-flash-preview-image');
+
+        $config = ModelConfig::fromArray([
+            'outputModalities' => ['text', 'audio'],
+            'outputMediaAspectRatio' => '16:9',
+        ]);
+        $model->setConfig($config);
+
+        $model->generateTextResult($this->createSimplePrompt());
+
+        $body = $transporter->getLastRequest()->getData();
+        $this->assertArrayHasKey('providerOptions', $body);
+        $this->assertArrayNotHasKey('imageConfig', $body['providerOptions']['google']);
+    }
+
+    public function testRequestBodyOmitsImageConfigWhenNotSet(): void
+    {
+        $transporter = new MockHttpTransporter($this->createMockResponse());
+        $model = $this->createModelWithGatewayId($transporter, 'google/gemini-2.5-flash-preview-image');
+
+        $config = ModelConfig::fromArray([
+            'outputModalities' => ['image', 'text'],
+        ]);
+        $model->setConfig($config);
+
+        $model->generateTextResult($this->createSimplePrompt());
+
+        $body = $transporter->getLastRequest()->getData();
+        $this->assertArrayHasKey('providerOptions', $body);
+        $this->assertArrayNotHasKey('imageConfig', $body['providerOptions']['google']);
+    }
+
     public function testRequestBodyOmitsResponseModalitiesForTextOnly(): void
     {
         $transporter = new MockHttpTransporter($this->createMockResponse());

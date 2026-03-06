@@ -9,6 +9,7 @@ use Vercel\AiGatewayProvider\Provider\AiGatewayProvider;
 use Vercel\AiGatewayProvider\Tests\Traits\IntegrationTestTrait;
 use WordPress\AiClient\AiClient;
 use WordPress\AiClient\Messages\Enums\ModalityEnum;
+use WordPress\AiClient\Providers\Models\DTO\ModelConfig;
 use WordPress\AiClient\Results\DTO\TokenUsage;
 
 /**
@@ -83,6 +84,36 @@ class TextAndImageGenerationIntegrationTest extends TestCase
         $this->assertStringStartsWith('image/', $file->getMimeType());
 
         $this->saveGeneratedFile($file, "image-only-{$modelId}");
+
+        $this->assertTokenUsage($modelId, $result->getTokenUsage());
+    }
+
+    /**
+     * @dataProvider provideModels
+     */
+    public function testImageOnlyOutputWithOptions(string $modelId): void
+    {
+        $config = ModelConfig::fromArray([
+            'outputMediaAspectRatio' => '4:1',
+        ]);
+
+        $result = AiClient::prompt('Generate an image of a red circle on a white background.')
+            ->usingModel(AiGatewayProvider::model($modelId))
+            ->usingModelConfig($config)
+            ->asOutputModalities(ModalityEnum::image())
+            ->generateTextResult();
+
+        $candidates = $result->getCandidates();
+        $this->assertCount(1, $candidates);
+
+        $parts = $candidates[0]->getMessage()->getParts();
+        $this->assertNotEmpty($parts);
+
+        $file = $parts[0]->getFile();
+        $this->assertNotNull($file);
+        $this->assertStringStartsWith('image/', $file->getMimeType());
+
+        $this->saveGeneratedFile($file, "image-only-options-{$modelId}");
 
         $this->assertTokenUsage($modelId, $result->getTokenUsage());
     }

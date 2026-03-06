@@ -58,6 +58,7 @@ use WordPress\AiClient\Tools\DTO\FunctionDeclaration;
  */
 class AiGatewayTextGenerationModel extends AbstractApiBasedModel implements TextGenerationModelInterface
 {
+    use WithAspectRatioTrait;
     use WithProviderOptionsTrait;
 
     private const API_NAME = 'AI Gateway';
@@ -277,9 +278,23 @@ class AiGatewayTextGenerationModel extends AbstractApiBasedModel implements Text
                 $slashPos = strpos($this->gatewayModelId, '/');
                 if ($slashPos !== false) {
                     $provider = substr($this->gatewayModelId, 0, $slashPos);
-                    $body['providerOptions'] = [
-                        $provider => ['responseModalities' => $modalityStrings],
-                    ];
+                    $providerValue = ['responseModalities' => $modalityStrings];
+
+                    $hasImageModality = false;
+                    foreach ($outputModalities as $modality) {
+                        if ($modality->isImage()) {
+                            $hasImageModality = true;
+                            break;
+                        }
+                    }
+                    if ($hasImageModality) {
+                        $aspectRatio = $this->resolveAspectRatio($config);
+                        if ($aspectRatio !== null) {
+                            $providerValue['imageConfig'] = ['aspectRatio' => $aspectRatio];
+                        }
+                    }
+
+                    $body['providerOptions'] = [$provider => $providerValue];
                 }
             }
         }

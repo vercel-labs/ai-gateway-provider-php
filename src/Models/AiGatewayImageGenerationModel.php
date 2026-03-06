@@ -27,7 +27,6 @@ use WordPress\AiClient\Providers\Http\DTO\Request;
 use WordPress\AiClient\Providers\Http\Enums\HttpMethodEnum;
 use WordPress\AiClient\Providers\Http\Exception\ResponseException;
 use WordPress\AiClient\Providers\Http\Util\ResponseUtil;
-use WordPress\AiClient\Providers\Models\DTO\ModelConfig;
 use WordPress\AiClient\Providers\Models\DTO\ModelMetadata;
 use WordPress\AiClient\Providers\Models\ImageGeneration\Contracts\ImageGenerationModelInterface;
 use WordPress\AiClient\Results\DTO\Candidate;
@@ -47,6 +46,7 @@ use WordPress\AiClient\Results\Enums\FinishReasonEnum;
  */
 class AiGatewayImageGenerationModel extends AbstractApiBasedModel implements ImageGenerationModelInterface
 {
+    use WithAspectRatioTrait;
     use WithProviderOptionsTrait;
 
     private const API_NAME = 'AI Gateway';
@@ -152,37 +152,6 @@ class AiGatewayImageGenerationModel extends AbstractApiBasedModel implements Ima
         }
 
         return $this->parseResponse($data);
-    }
-
-    /**
-     * Resolves the aspect ratio from the config.
-     *
-     * Explicit aspect ratio takes priority over orientation mapping.
-     *
-     * @since 1.0.0
-     *
-     * @param ModelConfig $config The model config.
-     * @return string|null The aspect ratio string, or null if not set.
-     */
-    private function resolveAspectRatio(ModelConfig $config): ?string
-    {
-        $aspectRatio = $config->getOutputMediaAspectRatio();
-        if ($aspectRatio !== null) {
-            return $aspectRatio;
-        }
-
-        $orientation = $config->getOutputMediaOrientation();
-        if ($orientation === null) {
-            return null;
-        }
-
-        if ($orientation->isLandscape()) {
-            return '16:9';
-        }
-        if ($orientation->isPortrait()) {
-            return '9:16';
-        }
-        return '1:1';
     }
 
     /**
