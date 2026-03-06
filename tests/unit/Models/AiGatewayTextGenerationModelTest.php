@@ -17,6 +17,7 @@ use WordPress\AiClient\Providers\DTO\ProviderMetadata;
 use WordPress\AiClient\Providers\Enums\ProviderTypeEnum;
 use WordPress\AiClient\Providers\Http\DTO\ApiKeyRequestAuthentication;
 use WordPress\AiClient\Providers\Http\DTO\Response;
+use WordPress\AiClient\Common\Exception\InvalidArgumentException;
 use WordPress\AiClient\Providers\Http\Exception\ResponseException;
 use WordPress\AiClient\Providers\Models\DTO\ModelConfig;
 use WordPress\AiClient\Providers\Models\DTO\ModelMetadata;
@@ -383,8 +384,12 @@ class AiGatewayTextGenerationModelTest extends TestCase
         $model->generateTextResult($this->createSimplePrompt());
 
         $body = $transporter->getLastRequest()->getData();
-        $this->assertSame(42, $body['seed']);
-        $this->assertSame(['hello' => 1.0], $body['logitBias']);
+        $this->assertArrayNotHasKey('seed', $body);
+        $this->assertArrayNotHasKey('logitBias', $body);
+        $this->assertSame(
+            ['anthropic' => ['seed' => 42, 'logitBias' => ['hello' => 1.0]]],
+            $body['providerOptions']
+        );
     }
 
     public function testRequestAuthenticationHeadersAreIncluded(): void
@@ -815,7 +820,7 @@ class AiGatewayTextGenerationModelTest extends TestCase
         $model->generateTextResult($this->createSimplePrompt());
 
         $body = $transporter->getLastRequest()->getData();
-        $this->assertArrayNotHasKey('providerOptions', $body);
+        $this->assertInstanceOf(\stdClass::class, $body['providerOptions']);
     }
 
     public function testRequestBodyOmitsResponseModalitiesWhenNull(): void
@@ -826,7 +831,7 @@ class AiGatewayTextGenerationModelTest extends TestCase
         $model->generateTextResult($this->createSimplePrompt());
 
         $body = $transporter->getLastRequest()->getData();
-        $this->assertArrayNotHasKey('providerOptions', $body);
+        $this->assertInstanceOf(\stdClass::class, $body['providerOptions']);
     }
 
     public function testParseResponseWithFileContentPart(): void
@@ -913,5 +918,96 @@ class AiGatewayTextGenerationModelTest extends TestCase
         $this->assertSame(0, $usage->getPromptTokens());
         $this->assertSame(0, $usage->getCompletionTokens());
         $this->assertSame(0, $usage->getTotalTokens());
+    }
+
+    public function testProviderOptionsKeyMergesIntoBodyProviderOptions(): void
+    {
+        $transporter = new MockHttpTransporter($this->createMockResponse());
+        $model = $this->createModel($transporter);
+
+        $config = ModelConfig::fromArray([
+            'customOptions' => [
+                'providerOptions' => [
+                    'anthropic' => ['thinking' => true],
+                ],
+            ],
+        ]);
+        $model->setConfig($config);
+
+        $model->generateTextResult($this->createSimplePrompt());
+
+        $body = $transporter->getLastRequest()->getData();
+        $this->assertSame(
+            ['anthropic' => ['thinking' => true]],
+            $body['providerOptions']
+        );
+    }
+
+    public function testProviderNameKeyGoesToProviderOptions(): void
+    {
+        $transporter = new MockHttpTransporter($this->createMockResponse());
+        $model = $this->createModel($transporter);
+
+        $config = ModelConfig::fromArray([
+            'customOptions' => [
+                'anthropic' => ['thinking' => true, 'maxBudget' => 500],
+            ],
+        ]);
+        $model->setConfig($config);
+
+        $model->generateTextResult($this->createSimplePrompt());
+
+        $body = $transporter->getLastRequest()->getData();
+        $this->assertSame(
+            ['anthropic' => ['thinking' => true, 'maxBudget' => 500]],
+            $body['providerOptions']
+        );
+    }
+
+    public function testProviderNameKeyMergesWithModalities(): void
+    {
+        $transporter = new MockHttpTransporter($this->createMockResponse());
+        $model = $this->createModelWithGatewayId(
+            $transporter,
+            'google/gemini-2.5-flash-preview-image'
+        );
+
+        $config = ModelConfig::fromArray([
+            'outputModalities' => ['image', 'text'],
+            'customOptions' => [
+                'google' => ['safetySettings' => ['threshold' => 'high']],
+            ],
+        ]);
+        $model->setConfig($config);
+
+        $model->generateTextResult($this->createSimplePrompt());
+
+        $body = $transporter->getLastRequest()->getData();
+        $this->assertArrayHasKey('providerOptions', $body);
+        $this->assertSame(['IMAGE', 'TEXT'], $body['providerOptions']['google']['responseModalities']);
+        $this->assertSame(
+            ['threshold' => 'high'],
+            $body['providerOptions']['google']['safetySettings']
+        );
+    }
+
+    public function testProviderNameKeyConflictWithModalitiesThrows(): void
+    {
+        $transporter = new MockHttpTransporter($this->createMockResponse());
+        $model = $this->createModelWithGatewayId(
+            $transporter,
+            'google/gemini-2.5-flash-preview-image'
+        );
+
+        $config = ModelConfig::fromArray([
+            'outputModalities' => ['image', 'text'],
+            'customOptions' => [
+                'google' => ['responseModalities' => ['AUDIO']],
+            ],
+        ]);
+        $model->setConfig($config);
+
+        $this->expectException(InvalidArgumentException::class);
+        $model->generateTextResult($this->createSimplePrompt());
     }
 }

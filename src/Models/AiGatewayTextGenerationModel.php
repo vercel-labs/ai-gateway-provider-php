@@ -58,6 +58,8 @@ use WordPress\AiClient\Tools\DTO\FunctionDeclaration;
  */
 class AiGatewayTextGenerationModel extends AbstractApiBasedModel implements TextGenerationModelInterface
 {
+    use WithProviderOptionsTrait;
+
     private const API_NAME = 'AI Gateway';
 
     private const FINISH_REASON_MAP = [
@@ -90,6 +92,16 @@ class AiGatewayTextGenerationModel extends AbstractApiBasedModel implements Text
     ) {
         parent::__construct($metadata, $providerMetadata);
         $this->gatewayModelId = $gatewayModelId;
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @since n.e.x.t
+     */
+    protected function getGatewayModelId(): string
+    {
+        return $this->gatewayModelId;
     }
 
     /**
@@ -250,11 +262,6 @@ class AiGatewayTextGenerationModel extends AbstractApiBasedModel implements Text
             $body['responseFormat'] = $responseFormat;
         }
 
-        $customOptions = $config->getCustomOptions();
-        foreach ($customOptions as $key => $value) {
-            $body[$key] = $value;
-        }
-
         $outputModalities = $config->getOutputModalities();
         if (is_array($outputModalities) && count($outputModalities) > 0) {
             $isDefaultTextOnly = count($outputModalities) === 1 && $outputModalities[0]->isText();
@@ -266,6 +273,7 @@ class AiGatewayTextGenerationModel extends AbstractApiBasedModel implements Text
                     $outputModalities
                 );
 
+                // Technically, only "google" (and "google-vertex") supports this now.
                 $slashPos = strpos($this->gatewayModelId, '/');
                 if ($slashPos !== false) {
                     $provider = substr($this->gatewayModelId, 0, $slashPos);
@@ -275,6 +283,8 @@ class AiGatewayTextGenerationModel extends AbstractApiBasedModel implements Text
                 }
             }
         }
+
+        $body = $this->amendProviderOptions($body, $config->getCustomOptions());
 
         return $body;
     }

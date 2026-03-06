@@ -343,7 +343,7 @@ class AiGatewayImageGenerationModelTest extends TestCase
 
         $body = $transporter->getLastRequest()->getData();
         $this->assertArrayNotHasKey('style', $body);
-        $this->assertSame(['style' => 'vivid'], $body['providerOptions']);
+        $this->assertSame(['openai' => ['style' => 'vivid']], $body['providerOptions']);
     }
 
     public function testMixedCustomOptionsSplitting(): void
@@ -358,7 +358,7 @@ class AiGatewayImageGenerationModelTest extends TestCase
 
         $body = $transporter->getLastRequest()->getData();
         $this->assertSame(42, $body['seed']);
-        $this->assertSame(['style' => 'vivid'], $body['providerOptions']);
+        $this->assertSame(['openai' => ['style' => 'vivid']], $body['providerOptions']);
     }
 
     public function testNoCustomOptionsDefaultsEmptyProviderOptions(): void
@@ -425,5 +425,76 @@ class AiGatewayImageGenerationModelTest extends TestCase
         $this->assertSame(10, $usage->getPromptTokens());
         $this->assertSame(5, $usage->getCompletionTokens());
         $this->assertSame(15, $usage->getTotalTokens());
+    }
+
+    public function testProviderOptionsKeyMergesIntoProviderOptions(): void
+    {
+        $transporter = new MockHttpTransporter($this->createMockResponse());
+        $model = $this->createModel($transporter);
+        $model->setConfig(ModelConfig::fromArray([
+            'customOptions' => [
+                'providerOptions' => [
+                    'openai' => ['quality' => 'hd'],
+                ],
+            ],
+        ]));
+
+        $model->generateImageResult($this->createSimplePrompt());
+
+        $body = $transporter->getLastRequest()->getData();
+        $this->assertSame(['openai' => ['quality' => 'hd']], $body['providerOptions']);
+    }
+
+    public function testProviderNameKeyHandling(): void
+    {
+        $transporter = new MockHttpTransporter($this->createMockResponse());
+        $model = $this->createModel($transporter);
+        $model->setConfig(ModelConfig::fromArray([
+            'customOptions' => [
+                'openai' => ['quality' => 'hd', 'style' => 'vivid'],
+            ],
+        ]));
+
+        $model->generateImageResult($this->createSimplePrompt());
+
+        $body = $transporter->getLastRequest()->getData();
+        $this->assertSame(
+            ['openai' => ['quality' => 'hd', 'style' => 'vivid']],
+            $body['providerOptions']
+        );
+    }
+
+    public function testGatewayKeyHandling(): void
+    {
+        $transporter = new MockHttpTransporter($this->createMockResponse());
+        $model = $this->createModel($transporter);
+        $model->setConfig(ModelConfig::fromArray([
+            'customOptions' => [
+                'gateway' => ['cacheControl' => true],
+            ],
+        ]));
+
+        $model->generateImageResult($this->createSimplePrompt());
+
+        $body = $transporter->getLastRequest()->getData();
+        $this->assertSame(
+            ['gateway' => ['cacheControl' => true]],
+            $body['providerOptions']
+        );
+    }
+
+    public function testConflictingProviderOptionsThrows(): void
+    {
+        $transporter = new MockHttpTransporter($this->createMockResponse());
+        $model = $this->createModel($transporter);
+        $model->setConfig(ModelConfig::fromArray([
+            'customOptions' => [
+                'style' => 'vivid',
+                'openai' => ['style' => 'natural'],
+            ],
+        ]));
+
+        $this->expectException(InvalidArgumentException::class);
+        $model->generateImageResult($this->createSimplePrompt());
     }
 }

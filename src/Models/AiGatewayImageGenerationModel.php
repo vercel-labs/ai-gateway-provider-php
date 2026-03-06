@@ -47,6 +47,8 @@ use WordPress\AiClient\Results\Enums\FinishReasonEnum;
  */
 class AiGatewayImageGenerationModel extends AbstractApiBasedModel implements ImageGenerationModelInterface
 {
+    use WithProviderOptionsTrait;
+
     private const API_NAME = 'AI Gateway';
 
     /** @var list<string> */
@@ -73,6 +75,16 @@ class AiGatewayImageGenerationModel extends AbstractApiBasedModel implements Ima
     ) {
         parent::__construct($metadata, $providerMetadata);
         $this->gatewayModelId = $gatewayModelId;
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @since n.e.x.t
+     */
+    protected function getGatewayModelId(): string
+    {
+        return $this->gatewayModelId;
     }
 
     /**
@@ -109,16 +121,11 @@ class AiGatewayImageGenerationModel extends AbstractApiBasedModel implements Ima
             $requestBody['aspectRatio'] = $aspectRatio;
         }
 
-        $customOptions = $config->getCustomOptions();
-        $providerOptions = [];
-        foreach ($customOptions as $key => $value) {
-            if (in_array($key, self::KNOWN_TOP_LEVEL_OPTIONS, true)) {
-                $requestBody[$key] = $value;
-            } else {
-                $providerOptions[$key] = $value;
-            }
-        }
-        $requestBody['providerOptions'] = empty($providerOptions) ? new \stdClass() : $providerOptions;
+        $requestBody = $this->amendProviderOptions(
+            $requestBody,
+            $config->getCustomOptions(),
+            self::KNOWN_TOP_LEVEL_OPTIONS
+        );
 
         $request = new Request(
             HttpMethodEnum::POST(),
