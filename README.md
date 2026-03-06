@@ -28,8 +28,8 @@ The provider automatically registers itself with the PHP AI Client on the `init`
 ```php
 // Use the provider
 $result = wp_ai_client_prompt('Hello, world!')
-    ->usingProvider('ai_gateway')
-    ->generateTextResult();
+    ->using_provider('ai_gateway')
+    ->generate_text_result();
 ```
 
 ### As a Standalone Package
