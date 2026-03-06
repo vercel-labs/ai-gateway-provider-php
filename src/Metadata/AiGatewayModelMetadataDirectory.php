@@ -194,10 +194,14 @@ class AiGatewayModelMetadataDirectory extends AbstractApiBasedModelMetadataDirec
                         str_starts_with($flatId, 'gemini-')
                         && (str_contains($flatId, '-image-') || str_ends_with($flatId, '-image'))
                     ) {
-                        $capabilities = [CapabilityEnum::textGeneration(), CapabilityEnum::imageGeneration()];
+                        $capabilities = [
+                            CapabilityEnum::textGeneration(),
+                            CapabilityEnum::imageGeneration(),
+                            CapabilityEnum::chatHistory(),
+                        ];
                         $options = $textAndImageOptions;
                     } else {
-                        $capabilities = [CapabilityEnum::textGeneration()];
+                        $capabilities = [CapabilityEnum::textGeneration(), CapabilityEnum::chatHistory()];
                         $options = $textOptions;
                     }
                     break;

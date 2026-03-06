@@ -344,13 +344,14 @@ class AiGatewayModelMetadataDirectoryTest extends TestCase
 
         $this->assertCount(1, $models);
         $capabilities = $models[0]->getSupportedCapabilities();
-        $this->assertCount(2, $capabilities);
+        $this->assertCount(3, $capabilities);
 
         $capabilityValues = array_map(function ($c) {
             return $c->value;
         }, $capabilities);
         $this->assertContains(CapabilityEnum::textGeneration()->value, $capabilityValues);
         $this->assertContains(CapabilityEnum::imageGeneration()->value, $capabilityValues);
+        $this->assertContains(CapabilityEnum::chatHistory()->value, $capabilityValues);
     }
 
     public function testGeminiImageModelGetsImageSpecificOptions(): void
@@ -389,8 +390,13 @@ class AiGatewayModelMetadataDirectoryTest extends TestCase
 
         $this->assertCount(1, $models);
         $capabilities = $models[0]->getSupportedCapabilities();
-        $this->assertCount(1, $capabilities);
-        $this->assertTrue($capabilities[0]->isTextGeneration());
+        $this->assertCount(2, $capabilities);
+
+        $capabilityValues = array_map(function ($c) {
+            return $c->value;
+        }, $capabilities);
+        $this->assertContains(CapabilityEnum::textGeneration()->value, $capabilityValues);
+        $this->assertContains(CapabilityEnum::chatHistory()->value, $capabilityValues);
     }
 
     private function findOutputModalitiesOption(ModelMetadata $model): ?SupportedOption
