@@ -67,6 +67,9 @@
         "phpstan": "phpstan analyze --memory-limit=256M",
         "test": "@test:unit",
         "test:unit": "phpunit",
-        "test:integration": "phpunit --configuration phpunit-integration.xml.dist"
+        "test:integration": [
+            "@putenv COMPOSER_PROCESS_TIMEOUT=600",
+            "phpunit --configuration phpunit-integration.xml.dist"
+        ]
     }
 }

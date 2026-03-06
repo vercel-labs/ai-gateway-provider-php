@@ -32,17 +32,17 @@ class ImageGenerationIntegrationTest extends TestCase
     public function provideModels(): array
     {
         return [
-            'Google' => ['imagen-4.0-generate-001'],
-            'OpenAI' => ['gpt-image-1'],
-            'xAI'    => ['grok-imagine-image'],
+            'Google (Imagen)' => ['imagen-4.0-generate-001'],
+            'Google (Gemini)' => ['gemini-3.1-flash-image-preview'],
+            'OpenAI (GPT)' => ['gpt-image-1'],
+            'xAI (Grok)' => ['grok-imagine-image'],
         ];
     }
 
     protected function assertTokenUsage(string $modelId, TokenUsage $tokenUsage): void
     {
         if (str_starts_with($modelId, 'imagen-') || str_starts_with($modelId, 'grok-')) {
-            // Google's Imagen models and xAI's Grok Imagine Image model don't return token usage data.
-            $message = 'Google and xAI do not return token usage data for image generation. Maybe that just changed?';
+            $message = 'Google (Imagen) and xAI (Grok) do not return token usage data for image generation.';
             $this->assertSame(0, $tokenUsage->getPromptTokens(), $message);
             $this->assertSame(0, $tokenUsage->getCompletionTokens(), $message);
         } else {
@@ -84,14 +84,19 @@ class ImageGenerationIntegrationTest extends TestCase
             'outputMediaAspectRatio' => '1:1',
         ]);
 
-        $result = AiClient::prompt('A blue square on a white background.')
+        $promptBuilder = AiClient::prompt('A blue square on a white background.')
             ->usingModel(AiGatewayProvider::model($modelId))
-            ->usingModelConfig($config)
-            ->usingCandidateCount(2)
-            ->generateImageResult();
+            ->usingModelConfig($config);
+
+        $isGemini = str_starts_with($modelId, 'gemini-');
+        if (!$isGemini) {
+            $promptBuilder = $promptBuilder->usingCandidateCount(2);
+        }
+
+        $result = $promptBuilder->generateImageResult();
 
         $candidates = $result->getCandidates();
-        $this->assertCount(2, $candidates);
+        $this->assertCount($isGemini ? 1 : 2, $candidates);
 
         foreach ($candidates as $index => $candidate) {
             $parts = $candidate->getMessage()->getParts();

@@ -157,6 +157,9 @@ class AiGatewayModelMetadataDirectory extends AbstractApiBasedModelMetadataDirec
                 }
             ),
             [
+                new SupportedOption(OptionEnum::outputFileType(), [[FileTypeEnum::inline()]]),
+                new SupportedOption(OptionEnum::outputMediaOrientation()),
+                new SupportedOption(OptionEnum::outputMediaAspectRatio()),
                 new SupportedOption(OptionEnum::outputModalities(), [
                     [ModalityEnum::text()],
                     [ModalityEnum::image()],
@@ -190,7 +193,7 @@ class AiGatewayModelMetadataDirectory extends AbstractApiBasedModelMetadataDirec
                         str_starts_with($flatId, 'gemini-')
                         && (str_contains($flatId, '-image-') || str_ends_with($flatId, '-image'))
                     ) {
-                        $capabilities = [CapabilityEnum::textGeneration()];
+                        $capabilities = [CapabilityEnum::textGeneration(), CapabilityEnum::imageGeneration()];
                         $options = $textAndImageOptions;
                     } else {
                         $capabilities = [CapabilityEnum::textGeneration()];
@@ -203,14 +206,6 @@ class AiGatewayModelMetadataDirectory extends AbstractApiBasedModelMetadataDirec
                     break;
                 default:
                     continue 2;
-            }
-
-            if (
-                $modelType === 'language'
-                && str_starts_with($flatId, 'gemini-')
-                && (str_contains($flatId, '-image-') || str_ends_with($flatId, '-image'))
-            ) {
-                $options = $textAndImageOptions;
             }
 
             $this->gatewayModelIdMap[$flatId] = $gatewayId;

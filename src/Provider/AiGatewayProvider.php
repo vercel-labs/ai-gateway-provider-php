@@ -14,6 +14,7 @@ namespace Vercel\AiGatewayProvider\Provider;
 
 use Vercel\AiGatewayProvider\Metadata\AiGatewayModelMetadataDirectory;
 use Vercel\AiGatewayProvider\Models\AiGatewayImageGenerationModel;
+use Vercel\AiGatewayProvider\Models\AiGatewayTextAndImageGenerationModel;
 use Vercel\AiGatewayProvider\Models\AiGatewayTextGenerationModel;
 use WordPress\AiClient\AiClient;
 use WordPress\AiClient\Common\Exception\RuntimeException;
@@ -60,21 +61,39 @@ class AiGatewayProvider extends AbstractApiProvider
         $gatewayModelId = $directory->getGatewayModelId($modelMetadata->getId());
         $capabilities = $modelMetadata->getSupportedCapabilities();
 
+        $hasTextGeneration = false;
+        $hasImageGeneration = false;
         foreach ($capabilities as $capability) {
             if ($capability->isTextGeneration()) {
-                return new AiGatewayTextGenerationModel(
-                    $modelMetadata,
-                    $providerMetadata,
-                    $gatewayModelId
-                );
+                $hasTextGeneration = true;
             }
             if ($capability->isImageGeneration()) {
-                return new AiGatewayImageGenerationModel(
-                    $modelMetadata,
-                    $providerMetadata,
-                    $gatewayModelId
-                );
+                $hasImageGeneration = true;
             }
+        }
+
+        if ($hasTextGeneration && $hasImageGeneration) {
+            return new AiGatewayTextAndImageGenerationModel(
+                $modelMetadata,
+                $providerMetadata,
+                $gatewayModelId
+            );
+        }
+
+        if ($hasTextGeneration) {
+            return new AiGatewayTextGenerationModel(
+                $modelMetadata,
+                $providerMetadata,
+                $gatewayModelId
+            );
+        }
+
+        if ($hasImageGeneration) {
+            return new AiGatewayImageGenerationModel(
+                $modelMetadata,
+                $providerMetadata,
+                $gatewayModelId
+            );
         }
 
         throw new RuntimeException(

@@ -1,0 +1,189 @@
+<?php
+
+/**
+ * Class Vercel\AiGatewayProvider\Models\AiGatewayTextAndImageGenerationModel
+ *
+ * @since n.e.x.t
+ *
+ * @package Vercel\AiGatewayProvider
+ */
+
+declare(strict_types=1);
+
+namespace Vercel\AiGatewayProvider\Models;
+
+use WordPress\AiClient\Providers\ApiBasedImplementation\Contracts\ApiBasedModelInterface;
+use WordPress\AiClient\Providers\DTO\ProviderMetadata;
+use WordPress\AiClient\Providers\Http\Contracts\HttpTransporterInterface;
+use WordPress\AiClient\Providers\Http\Contracts\RequestAuthenticationInterface;
+use WordPress\AiClient\Providers\Http\Contracts\WithHttpTransporterInterface;
+use WordPress\AiClient\Providers\Http\Contracts\WithRequestAuthenticationInterface;
+use WordPress\AiClient\Providers\Http\DTO\RequestOptions;
+use WordPress\AiClient\Providers\Models\DTO\ModelConfig;
+use WordPress\AiClient\Providers\Models\DTO\ModelMetadata;
+use WordPress\AiClient\Providers\Models\ImageGeneration\Contracts\ImageGenerationModelInterface;
+use WordPress\AiClient\Providers\Models\TextGeneration\Contracts\TextGenerationModelInterface;
+use WordPress\AiClient\Results\DTO\GenerativeAiResult;
+
+/**
+ * Class for a Vercel AI Gateway model that supports both text and image generation.
+ *
+ * This is a pure composition wrapper around AiGatewayTextGenerationModel. Both text and image generation
+ * delegate to the language-model endpoint — the framework sets the image output modality on the config
+ * before calling generateImageResult().
+ *
+ * @since n.e.x.t
+ */
+class AiGatewayTextAndImageGenerationModel implements
+    ApiBasedModelInterface,
+    WithHttpTransporterInterface,
+    WithRequestAuthenticationInterface,
+    TextGenerationModelInterface,
+    ImageGenerationModelInterface
+{
+    /**
+     * @var AiGatewayTextGenerationModel The inner text generation model.
+     */
+    private AiGatewayTextGenerationModel $model;
+
+    /**
+     * Constructor.
+     *
+     * @since n.e.x.t
+     *
+     * @param ModelMetadata    $metadata         The metadata for the model.
+     * @param ProviderMetadata $providerMetadata The metadata for the model's provider.
+     * @param string           $gatewayModelId   The full gateway model ID.
+     */
+    public function __construct(
+        ModelMetadata $metadata,
+        ProviderMetadata $providerMetadata,
+        string $gatewayModelId
+    ) {
+        $this->model = new AiGatewayTextGenerationModel(
+            $metadata,
+            $providerMetadata,
+            $gatewayModelId
+        );
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @since n.e.x.t
+     */
+    public function metadata(): ModelMetadata
+    {
+        return $this->model->metadata();
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @since n.e.x.t
+     */
+    public function providerMetadata(): ProviderMetadata
+    {
+        return $this->model->providerMetadata();
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @since n.e.x.t
+     */
+    public function setConfig(ModelConfig $config): void
+    {
+        $this->model->setConfig($config);
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @since n.e.x.t
+     */
+    public function getConfig(): ModelConfig
+    {
+        return $this->model->getConfig();
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @since n.e.x.t
+     */
+    public function setRequestOptions(RequestOptions $requestOptions): void
+    {
+        $this->model->setRequestOptions($requestOptions);
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @since n.e.x.t
+     */
+    public function getRequestOptions(): ?RequestOptions
+    {
+        return $this->model->getRequestOptions();
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @since n.e.x.t
+     */
+    public function setHttpTransporter(HttpTransporterInterface $httpTransporter): void
+    {
+        $this->model->setHttpTransporter($httpTransporter);
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @since n.e.x.t
+     */
+    public function getHttpTransporter(): HttpTransporterInterface
+    {
+        return $this->model->getHttpTransporter();
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @since n.e.x.t
+     */
+    public function setRequestAuthentication(RequestAuthenticationInterface $requestAuthentication): void
+    {
+        $this->model->setRequestAuthentication($requestAuthentication);
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @since n.e.x.t
+     */
+    public function getRequestAuthentication(): RequestAuthenticationInterface
+    {
+        return $this->model->getRequestAuthentication();
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @since n.e.x.t
+     */
+    public function generateTextResult(array $prompt): GenerativeAiResult
+    {
+        return $this->model->generateTextResult($prompt);
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @since n.e.x.t
+     */
+    public function generateImageResult(array $prompt): GenerativeAiResult
+    {
+        return $this->model->generateTextResult($prompt);
+    }
+}

@@ -14,6 +14,7 @@ use WordPress\AiClient\Messages\Enums\ModalityEnum;
 use WordPress\AiClient\Providers\Http\DTO\Response;
 use WordPress\AiClient\Providers\Models\DTO\ModelMetadata;
 use WordPress\AiClient\Providers\Models\DTO\SupportedOption;
+use WordPress\AiClient\Providers\Models\Enums\CapabilityEnum;
 use WordPress\AiClient\Providers\Models\Enums\OptionEnum;
 
 class AiGatewayModelMetadataDirectoryTest extends TestCase
@@ -327,6 +328,69 @@ class AiGatewayModelMetadataDirectoryTest extends TestCase
         $values = $outputModalitiesOption->getSupportedValues();
         $this->assertCount(1, $values);
         $this->assertTrue($outputModalitiesOption->isSupportedValue([ModalityEnum::text()]));
+    }
+
+    public function testGeminiImageModelGetsBothCapabilities(): void
+    {
+        $directory = $this->createDirectory($this->createConfigResponse([
+            $this->makeLanguageModel([
+                'id' => 'google/gemini-2.5-flash-preview-image',
+                'name' => 'Gemini 2.5 Flash Preview Image',
+                'specification' => ['modelId' => 'google/gemini-2.5-flash-preview-image'],
+            ]),
+        ]));
+
+        $models = $directory->listModelMetadata();
+
+        $this->assertCount(1, $models);
+        $capabilities = $models[0]->getSupportedCapabilities();
+        $this->assertCount(2, $capabilities);
+
+        $capabilityValues = array_map(function ($c) {
+            return $c->value;
+        }, $capabilities);
+        $this->assertContains(CapabilityEnum::textGeneration()->value, $capabilityValues);
+        $this->assertContains(CapabilityEnum::imageGeneration()->value, $capabilityValues);
+    }
+
+    public function testGeminiImageModelGetsImageSpecificOptions(): void
+    {
+        $directory = $this->createDirectory($this->createConfigResponse([
+            $this->makeLanguageModel([
+                'id' => 'google/gemini-2.5-flash-preview-image',
+                'name' => 'Gemini 2.5 Flash Preview Image',
+                'specification' => ['modelId' => 'google/gemini-2.5-flash-preview-image'],
+            ]),
+        ]));
+
+        $models = $directory->listModelMetadata();
+
+        $this->assertCount(1, $models);
+        $optionNames = array_map(function (SupportedOption $option) {
+            return $option->getName()->value;
+        }, $models[0]->getSupportedOptions());
+
+        $this->assertNotContains(OptionEnum::candidateCount()->value, $optionNames);
+        $this->assertContains(OptionEnum::outputFileType()->value, $optionNames);
+        $this->assertContains(OptionEnum::outputMediaOrientation()->value, $optionNames);
+        $this->assertContains(OptionEnum::outputMediaAspectRatio()->value, $optionNames);
+    }
+
+    public function testRegularLanguageModelHasOnlyTextGenerationCapability(): void
+    {
+        $directory = $this->createDirectory($this->createConfigResponse([
+            $this->makeLanguageModel([
+                'id' => 'anthropic/claude-sonnet-4-6',
+                'specification' => ['modelId' => 'anthropic/claude-sonnet-4-6'],
+            ]),
+        ]));
+
+        $models = $directory->listModelMetadata();
+
+        $this->assertCount(1, $models);
+        $capabilities = $models[0]->getSupportedCapabilities();
+        $this->assertCount(1, $capabilities);
+        $this->assertTrue($capabilities[0]->isTextGeneration());
     }
 
     private function findOutputModalitiesOption(ModelMetadata $model): ?SupportedOption
