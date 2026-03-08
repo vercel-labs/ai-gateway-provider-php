@@ -1,11 +1,11 @@
 === AI Gateway Provider ===
 
-Contributors: wordpressdotorg
+Contributors: vercellabs, flixos90
 Tested up to: 7.0
 Stable tag:   1.0.0-alpha
 License:      MIT
 License URI:  https://opensource.org/license/mit
-Tags:         ai, gateway, vercel, artificial-intelligence, llm, connector
+Tags:         ai, vercel, artificial-intelligence, llm, connector
 
 Vercel AI Gateway provider for the PHP AI Client SDK. Works as a Composer package and WordPress plugin.
 
