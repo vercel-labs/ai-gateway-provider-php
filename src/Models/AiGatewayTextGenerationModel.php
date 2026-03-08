@@ -150,6 +150,7 @@ class AiGatewayTextGenerationModel extends AbstractApiBasedModel implements Text
         /** @var ResponseData|null $data */
         $data = $response->getData();
         if ($data === null) {
+            // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
             throw ResponseException::fromMissingData(self::API_NAME, 'response body');
         }
 
@@ -437,6 +438,7 @@ class AiGatewayTextGenerationModel extends AbstractApiBasedModel implements Text
     private function parseContentParts(array $data): array
     {
         if (!isset($data['content'])) {
+            // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
             throw ResponseException::fromMissingData(self::API_NAME, 'content');
         }
 
@@ -471,6 +473,7 @@ class AiGatewayTextGenerationModel extends AbstractApiBasedModel implements Text
 
         if (count($parts) === 0) {
             throw ResponseException::fromInvalidData(
+                // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
                 self::API_NAME,
                 'content',
                 'No supported content found in response.'
@@ -493,6 +496,7 @@ class AiGatewayTextGenerationModel extends AbstractApiBasedModel implements Text
     private function parseFinishReason(array $data): FinishReasonEnum
     {
         if (!isset($data['finishReason'])) {
+            // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
             throw ResponseException::fromMissingData(self::API_NAME, 'finishReason');
         }
 
@@ -501,8 +505,10 @@ class AiGatewayTextGenerationModel extends AbstractApiBasedModel implements Text
         $reason = is_array($finishReason) ? ($finishReason['unified'] ?? null) : null;
         if ($reason === null || !isset(self::FINISH_REASON_MAP[$reason])) {
             throw ResponseException::fromInvalidData(
+                // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
                 self::API_NAME,
                 'finishReason',
+                // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
                 sprintf('Unknown finish reason "%s".', is_string($reason) ? $reason : json_encode($finishReason))
             );
         }

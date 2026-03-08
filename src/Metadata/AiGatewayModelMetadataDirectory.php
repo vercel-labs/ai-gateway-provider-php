@@ -82,6 +82,7 @@ class AiGatewayModelMetadataDirectory extends AbstractApiBasedModelMetadataDirec
     {
         if (!isset($this->gatewayModelIdMap[$modelId])) {
             throw new InvalidArgumentException(
+                // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
                 sprintf('No gateway model ID found for model "%s".', $modelId)
             );
         }

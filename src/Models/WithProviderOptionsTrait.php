@@ -71,6 +71,7 @@ trait WithProviderOptionsTrait
                     } else {
                         if (array_key_exists((string) $subKey, $providerOptions)) {
                             throw new InvalidArgumentException(
+                                // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
                                 sprintf('Provider option "%s" conflicts with an existing value.', $subKey)
                             );
                         }
@@ -80,6 +81,7 @@ trait WithProviderOptionsTrait
             } elseif ($key === 'gateway' || $key === $providerName) {
                 if (!is_array($value)) {
                     throw new InvalidArgumentException(
+                        // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
                         sprintf('The "%s" custom option must be an array.', $key)
                     );
                 }
@@ -92,6 +94,7 @@ trait WithProviderOptionsTrait
                     && array_key_exists($key, $providerOptions[$providerName])
                 ) {
                     throw new InvalidArgumentException(
+                        // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
                         sprintf('Provider option "%s.%s" conflicts with an existing value.', $providerName, $key)
                     );
                 }
@@ -125,6 +128,7 @@ trait WithProviderOptionsTrait
 
         if (!is_array($providerOptions[$key])) {
             throw new InvalidArgumentException(
+                // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
                 sprintf('Provider option "%s" conflicts with an existing non-array value.', $key)
             );
         }
@@ -134,6 +138,7 @@ trait WithProviderOptionsTrait
         foreach ($values as $innerKey => $innerValue) {
             if (array_key_exists($innerKey, $existing)) {
                 throw new InvalidArgumentException(
+                    // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
                     sprintf('Provider option "%s.%s" conflicts with an existing value.', $key, $innerKey)
                 );
             }

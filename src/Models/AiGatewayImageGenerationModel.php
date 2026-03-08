@@ -148,6 +148,7 @@ class AiGatewayImageGenerationModel extends AbstractApiBasedModel implements Ima
         /** @var ResponseData|null $data */
         $data = $response->getData();
         if ($data === null) {
+            // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
             throw ResponseException::fromMissingData(self::API_NAME, 'response body');
         }
 
@@ -204,6 +205,7 @@ class AiGatewayImageGenerationModel extends AbstractApiBasedModel implements Ima
     private function parseResponse(array $data): GenerativeAiResult
     {
         if (!isset($data['images']) || !is_array($data['images'])) {
+            // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
             throw ResponseException::fromMissingData(self::API_NAME, 'images');
         }
 

@@ -10,6 +10,11 @@
 
 declare(strict_types=1);
 
+// Exit if accessed directly (outside of WordPress).
+if (!defined('ABSPATH')) {
+    exit;
+}
+
 spl_autoload_register(static function (string $class): void {
     $prefix = 'Vercel\\AiGatewayProvider\\';
     $baseDir = __DIR__ . '/';

@@ -97,6 +97,7 @@ class AiGatewayProvider extends AbstractApiProvider
         }
 
         throw new RuntimeException(
+            // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
             'Unsupported model capabilities: ' . implode(', ', $capabilities)
         );
     }
