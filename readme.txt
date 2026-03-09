@@ -63,7 +63,7 @@ You can access all of these and many more directly through the AI Gateway, drast
 
 = How do I get an AI Gateway API key? =
 
-[Get an AI Gateway API key here.](https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai%2Fapi-keys&title=Get%20AI%20Gateway%20API%20Key)
+[Get an AI Gateway API key here.](https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai%2Fapi-keys&title=Get%20AI%20Gateway%20API%20key%20for%20your%20WordPress%20site)
 
 == Changelog ==
 
