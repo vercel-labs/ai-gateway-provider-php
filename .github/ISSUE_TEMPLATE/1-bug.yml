@@ -30,7 +30,7 @@ body:
       label: Additional Context
       description: Please share information about your environment, such as project version, Node.js version, and operating system.
       placeholder: |
-        - AI Gateway Provider plugin version:
+        - AI Gateway Provider package/plugin version:
         - PHP version:
         - WordPress version (if applicable):
         - Other relevant information:
