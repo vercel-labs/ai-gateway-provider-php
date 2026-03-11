@@ -8,6 +8,7 @@ on:
       - 'plugin.php'
       - 'readme.txt'
       - 'src/Provider/AiGatewayProvider.php'
+      - '.github/workflows/check-versions.yml'
   pull_request:
     branches:
       - main
@@ -15,6 +16,7 @@ on:
       - 'plugin.php'
       - 'readme.txt'
       - 'src/Provider/AiGatewayProvider.php'
+      - '.github/workflows/check-versions.yml'
 
 jobs:
   check-versions:
