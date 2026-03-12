@@ -12,7 +12,6 @@ use WordPress\AiClient\Messages\DTO\Message;
 use WordPress\AiClient\Messages\DTO\MessagePart;
 use WordPress\AiClient\Messages\Enums\MessageRoleEnum;
 use WordPress\AiClient\Messages\Enums\ModalityEnum;
-use WordPress\AiClient\Providers\Models\DTO\ModelConfig;
 use WordPress\AiClient\Results\DTO\TokenUsage;
 
 /**
@@ -96,14 +95,9 @@ class TextAndImageGenerationIntegrationTest extends TestCase
      */
     public function testImageOnlyOutputWithOptions(string $modelId): void
     {
-        // TODO: Replace this with `asOutputMediaAspectRatio('1:1')` once that option is supported by the framework.
-        $config = ModelConfig::fromArray([
-            'outputMediaAspectRatio' => '4:1',
-        ]);
-
         $result = AiClient::prompt('Generate an image of a red circle on a white background.')
             ->usingModel(AiGatewayProvider::model($modelId))
-            ->usingModelConfig($config)
+            ->asOutputMediaAspectRatio('4:1')
             ->asOutputModalities(ModalityEnum::image())
             ->generateTextResult();
 

@@ -8,7 +8,6 @@ use PHPUnit\Framework\TestCase;
 use Vercel\AiGatewayProvider\Provider\AiGatewayProvider;
 use Vercel\AiGatewayProvider\Tests\Traits\IntegrationTestTrait;
 use WordPress\AiClient\AiClient;
-use WordPress\AiClient\Providers\Models\DTO\ModelConfig;
 use WordPress\AiClient\Results\DTO\TokenUsage;
 
 /**
@@ -80,17 +79,12 @@ class ImageGenerationIntegrationTest extends TestCase
      */
     public function testGenerationWithOptions(string $modelId): void
     {
-        // TODO: Replace this with `asOutputMediaAspectRatio('1:1')` once that option is supported by the framework.
-        $config = ModelConfig::fromArray([
-            'outputMediaAspectRatio' => '1:1',
-        ]);
-
         $isGemini = str_starts_with($modelId, 'gemini-');
         $candidateCount = $isGemini ? 1 : 2;
 
         $result = AiClient::prompt('A blue square on a white background.')
             ->usingModel(AiGatewayProvider::model($modelId))
-            ->usingModelConfig($config)
+            ->asOutputMediaAspectRatio('1:1')
             ->usingCandidateCount($candidateCount)
             ->generateImageResult();
 
