@@ -8,6 +8,8 @@ Vercel AI Gateway provider for the [PHP AI Client](https://github.com/WordPress/
 
 ### As a Composer Package
 
+Make sure you're using `WordPress/php-ai-client` 1.3.0 or higher.
+
 ```bash
 composer require vercel/ai-gateway-provider
 ```
