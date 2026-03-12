@@ -16,7 +16,6 @@ use Vercel\AiGatewayProvider\Metadata\AiGatewayModelMetadataDirectory;
 use Vercel\AiGatewayProvider\Models\AiGatewayImageGenerationModel;
 use Vercel\AiGatewayProvider\Models\AiGatewayTextAndImageGenerationModel;
 use Vercel\AiGatewayProvider\Models\AiGatewayTextGenerationModel;
-use WordPress\AiClient\AiClient;
 use WordPress\AiClient\Common\Exception\RuntimeException;
 use WordPress\AiClient\Providers\ApiBasedImplementation\AbstractApiProvider;
 use WordPress\AiClient\Providers\ApiBasedImplementation\ListModelsApiBasedProviderAvailability;
@@ -109,21 +108,23 @@ class AiGatewayProvider extends AbstractApiProvider
      */
     protected static function createProviderMetadata(): ProviderMetadata
     {
-        $args = [
+        if (function_exists('__')) {
+            /** @var string $description */
+            $description = __('Generate and edit text, images, and more with over 100 AI models from over 20 providers.', 'ai-gateway-provider'); // phpcs:ignore Generic.Files.LineLength
+        } else {
+            $description = 'Generate and edit text, images, and more with over 100 AI models from over 20 providers.';
+        }
+
+        return new ProviderMetadata(
             'ai_gateway',
             'AI Gateway',
             ProviderTypeEnum::cloud(),
             // phpcs:ignore Generic.Files.LineLength
             'https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai%2Fapi-keys&title=Get%20AI%20Gateway%20API%20key%20for%20your%20WordPress%20site',
             RequestAuthenticationMethod::apiKey(),
-        ];
-        if (version_compare(AiClient::VERSION, '1.2.0', '>=')) {
-            $args[] = function_exists('__')
-                // phpcs:ignore Generic.Files.LineLength
-                ? __('Generate and edit text, images, and more with over 100 AI models from over 20 providers.', 'ai-gateway-provider')
-                : 'Generate and edit text, images, and more with over 100 AI models from over 20 providers.';
-        }
-        return new ProviderMetadata(...$args);
+            $description,
+            dirname(__DIR__, 2) . '/assets/vercel-logo.png'
+        );
     }
 
     /**

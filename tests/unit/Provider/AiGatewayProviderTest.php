@@ -27,5 +27,16 @@ class AiGatewayProviderTest extends TestCase
         $this->assertSame('AI Gateway', $metadata->getName());
         $this->assertTrue($metadata->getType()->is(ProviderTypeEnum::cloud()));
         $this->assertTrue($metadata->getAuthenticationMethod()->is(RequestAuthenticationMethod::apiKey()));
+        $this->assertNotNull($metadata->getDescription());
+        $this->assertStringContainsString('100 AI models', $metadata->getDescription());
+    }
+
+    public function testProviderMetadataLogoPath(): void
+    {
+        $metadata = AiGatewayProvider::metadata();
+
+        $logoPath = $metadata->getLogoPath();
+        $this->assertNotNull($logoPath);
+        $this->assertStringEndsWith('/assets/vercel-logo.png', $logoPath);
     }
 }
