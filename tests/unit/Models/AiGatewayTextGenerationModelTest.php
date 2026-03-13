@@ -133,10 +133,7 @@ class AiGatewayTextGenerationModelTest extends TestCase
 
         $systemMessage = $body['prompt'][0];
         $this->assertSame('system', $systemMessage['role']);
-        $this->assertSame(
-            [['type' => 'text', 'text' => 'You are a helpful assistant.']],
-            $systemMessage['content']
-        );
+        $this->assertSame('You are a helpful assistant.', $systemMessage['content']);
     }
 
     public function testRequestBodyIncludesConfigOptions(): void

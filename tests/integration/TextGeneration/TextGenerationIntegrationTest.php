@@ -74,6 +74,27 @@ class TextGenerationIntegrationTest extends TestCase
     /**
      * @dataProvider provideModels
      */
+    public function testWithSystemInstruction(string $modelId): void
+    {
+        $result = AiClient::prompt('What is 2+2? Respond with only the number.')
+            ->usingModel(AiGatewayProvider::model($modelId))
+            ->usingSystemInstruction('You are a helpful math tutor.')
+            ->generateTextResult();
+
+        $candidates = $result->getCandidates();
+        $this->assertCount(1, $candidates);
+
+        $text = $candidates[0]->getMessage()->getParts()[0]->getText();
+        $this->assertNotNull($text);
+        $this->assertNotEmpty($text);
+        $this->assertStringContainsString('4', $text);
+
+        $this->assertTokenUsage($modelId, $result->getTokenUsage());
+    }
+
+    /**
+     * @dataProvider provideModels
+     */
     public function testGenerationWithOptions(string $modelId): void
     {
         $result = AiClient::prompt('Write a single short sentence about the color blue.')

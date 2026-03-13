@@ -193,7 +193,7 @@ class AiGatewayTextGenerationModel extends AbstractApiBasedModel implements Text
         if ($systemInstruction !== null) {
             $messages[] = [
                 'role' => 'system',
-                'content' => [['type' => 'text', 'text' => $systemInstruction]],
+                'content' => $systemInstruction,
             ];
         }
 
