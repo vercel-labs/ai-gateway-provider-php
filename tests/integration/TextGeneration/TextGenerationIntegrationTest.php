@@ -313,6 +313,7 @@ class TextGenerationIntegrationTest extends TestCase
             'Anthropic' => ['claude-sonnet-4.6'],
             'Google'    => ['gemini-3-pro-preview'],
             'OpenAI'    => ['o3-mini'],
+            'xAI'       => ['grok-3-mini'],
         ];
     }
 
@@ -334,6 +335,12 @@ class TextGenerationIntegrationTest extends TestCase
             case 'o3-mini':
                 $providerOptions = ['openai' => ['reasoningEffort' => 'medium']];
                 break;
+            case 'grok-3-mini':
+                // TODO: For some reason, despite the model reasoning, the response does not include reasoning parts.
+                $providerOptions = ['xai' => ['reasoning' => [
+                    'effort' => 'low',
+                ]]];
+                break;
         }
 
         $modelConfig = new ModelConfig();
@@ -343,7 +350,7 @@ class TextGenerationIntegrationTest extends TestCase
             MessageRoleEnum::user(),
             [new MessagePart(
                 'A farmer has 15 apples. He gives 3 to each of his 4 neighbors. '
-                . 'How many apples does he have left? Think step by step.'
+                . 'How many apples does he have left? Respond with only the final number.'
             )]
         );
 
