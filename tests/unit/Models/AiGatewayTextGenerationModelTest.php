@@ -11,6 +11,7 @@ use Vercel\AiGatewayProvider\Tests\Mocks\MockHttpTransporter;
 use WordPress\AiClient\Files\DTO\File;
 use WordPress\AiClient\Messages\DTO\Message;
 use WordPress\AiClient\Messages\DTO\MessagePart;
+use WordPress\AiClient\Messages\Enums\MessagePartChannelEnum;
 use WordPress\AiClient\Messages\Enums\MessageRoleEnum;
 use WordPress\AiClient\Messages\Enums\ModalityEnum;
 use WordPress\AiClient\Providers\DTO\ProviderMetadata;
@@ -1000,6 +1001,84 @@ class AiGatewayTextGenerationModelTest extends TestCase
         $this->assertSame(0, $usage->getTotalTokens());
     }
 
+    public function testTokenUsageNestedFormatWithReasoningTokens(): void
+    {
+        $response = new Response(
+            200,
+            ['Content-Type' => 'application/json'],
+            json_encode([
+                'content' => [['type' => 'text', 'text' => 'hi']],
+                'finishReason' => ['unified' => 'stop'],
+                'usage' => [
+                    'inputTokens' => ['total' => 50],
+                    'outputTokens' => ['total' => 200, 'reasoning' => 150],
+                ],
+            ])
+        );
+        $transporter = new MockHttpTransporter($response);
+        $model = $this->createModel($transporter);
+
+        $result = $model->generateTextResult($this->createSimplePrompt());
+        $usage = $result->getTokenUsage();
+
+        $this->assertSame(50, $usage->getPromptTokens());
+        $this->assertSame(200, $usage->getCompletionTokens());
+        $this->assertSame(250, $usage->getTotalTokens());
+        $this->assertSame(150, $usage->getThoughtTokens());
+    }
+
+    public function testTokenUsageNestedFormatWithoutReasoningTokens(): void
+    {
+        $response = new Response(
+            200,
+            ['Content-Type' => 'application/json'],
+            json_encode([
+                'content' => [['type' => 'text', 'text' => 'hi']],
+                'finishReason' => ['unified' => 'stop'],
+                'usage' => [
+                    'inputTokens' => ['total' => 25],
+                    'outputTokens' => ['total' => 12],
+                ],
+            ])
+        );
+        $transporter = new MockHttpTransporter($response);
+        $model = $this->createModel($transporter);
+
+        $result = $model->generateTextResult($this->createSimplePrompt());
+        $usage = $result->getTokenUsage();
+
+        $this->assertSame(25, $usage->getPromptTokens());
+        $this->assertSame(12, $usage->getCompletionTokens());
+        $this->assertSame(37, $usage->getTotalTokens());
+        $this->assertNull($usage->getThoughtTokens());
+    }
+
+    public function testTokenUsageFlatFormatReturnsNullThoughtTokens(): void
+    {
+        $response = new Response(
+            200,
+            ['Content-Type' => 'application/json'],
+            json_encode([
+                'content' => [['type' => 'text', 'text' => 'hi']],
+                'finishReason' => ['unified' => 'stop'],
+                'usage' => [
+                    'promptTokens' => 30,
+                    'completionTokens' => 15,
+                ],
+            ])
+        );
+        $transporter = new MockHttpTransporter($response);
+        $model = $this->createModel($transporter);
+
+        $result = $model->generateTextResult($this->createSimplePrompt());
+        $usage = $result->getTokenUsage();
+
+        $this->assertSame(30, $usage->getPromptTokens());
+        $this->assertSame(15, $usage->getCompletionTokens());
+        $this->assertSame(45, $usage->getTotalTokens());
+        $this->assertNull($usage->getThoughtTokens());
+    }
+
     public function testProviderOptionsKeyMergesIntoBodyProviderOptions(): void
     {
         $transporter = new MockHttpTransporter($this->createMockResponse());
@@ -1089,5 +1168,1092 @@ class AiGatewayTextGenerationModelTest extends TestCase
 
         $this->expectException(InvalidArgumentException::class);
         $model->generateTextResult($this->createSimplePrompt());
+    }
+
+    public function testParseReasoningContentPartWithAnthropicSignature(): void
+    {
+        $response = new Response(
+            200,
+            ['Content-Type' => 'application/json'],
+            json_encode([
+                'content' => [
+                    [
+                        'type' => 'reasoning',
+                        'text' => 'Let me think about this...',
+                        'providerMetadata' => [
+                            'anthropic' => ['signature' => 'sig-anthropic-abc'],
+                        ],
+                    ],
+                    ['type' => 'text', 'text' => 'The answer is 42.'],
+                ],
+                'finishReason' => ['unified' => 'stop'],
+                'usage' => ['promptTokens' => 10, 'completionTokens' => 20],
+            ])
+        );
+        $transporter = new MockHttpTransporter($response);
+        $model = $this->createModel($transporter);
+
+        $result = $model->generateTextResult($this->createSimplePrompt());
+
+        $parts = $result->toMessage()->getParts();
+        $this->assertCount(2, $parts);
+
+        $this->assertTrue($parts[0]->getChannel()->isThought());
+        $this->assertSame('Let me think about this...', $parts[0]->getText());
+        $this->assertSame('sig-anthropic-abc', $parts[0]->getThoughtSignature());
+
+        $this->assertTrue($parts[1]->getChannel()->isContent());
+        $this->assertSame('The answer is 42.', $parts[1]->getText());
+        $this->assertNull($parts[1]->getThoughtSignature());
+    }
+
+    public function testParseReasoningContentPartWithoutSignature(): void
+    {
+        $response = new Response(
+            200,
+            ['Content-Type' => 'application/json'],
+            json_encode([
+                'content' => [
+                    [
+                        'type' => 'reasoning',
+                        'text' => 'Thinking without signature...',
+                    ],
+                    ['type' => 'text', 'text' => 'Done.'],
+                ],
+                'finishReason' => ['unified' => 'stop'],
+                'usage' => [],
+            ])
+        );
+        $transporter = new MockHttpTransporter($response);
+        $model = $this->createModelWithGatewayId($transporter, 'deepseek/deepseek-r1');
+
+        $result = $model->generateTextResult($this->createSimplePrompt());
+
+        $parts = $result->toMessage()->getParts();
+        $this->assertCount(2, $parts);
+
+        $this->assertTrue($parts[0]->getChannel()->isThought());
+        $this->assertSame('Thinking without signature...', $parts[0]->getText());
+        $this->assertNull($parts[0]->getThoughtSignature());
+    }
+
+    public function testExtractThoughtSignatureGoogle(): void
+    {
+        $response = new Response(
+            200,
+            ['Content-Type' => 'application/json'],
+            json_encode([
+                'content' => [
+                    [
+                        'type' => 'reasoning',
+                        'text' => 'Reasoning...',
+                        'providerMetadata' => [
+                            'google' => ['thoughtSignature' => 'google-sig-xyz'],
+                        ],
+                    ],
+                    ['type' => 'text', 'text' => 'Result.'],
+                ],
+                'finishReason' => ['unified' => 'stop'],
+                'usage' => [],
+            ])
+        );
+        $transporter = new MockHttpTransporter($response);
+        $model = $this->createModelWithGatewayId($transporter, 'google/gemini-2.5-flash');
+
+        $result = $model->generateTextResult($this->createSimplePrompt());
+
+        $parts = $result->toMessage()->getParts();
+        $this->assertSame('google-sig-xyz', $parts[0]->getThoughtSignature());
+    }
+
+    public function testExtractThoughtSignatureGoogleVertexFallback(): void
+    {
+        $response = new Response(
+            200,
+            ['Content-Type' => 'application/json'],
+            json_encode([
+                'content' => [
+                    [
+                        'type' => 'reasoning',
+                        'text' => 'Reasoning...',
+                        'providerMetadata' => [
+                            'vertex' => ['thoughtSignature' => 'vertex-sig-abc'],
+                        ],
+                    ],
+                    ['type' => 'text', 'text' => 'Result.'],
+                ],
+                'finishReason' => ['unified' => 'stop'],
+                'usage' => [],
+            ])
+        );
+        $transporter = new MockHttpTransporter($response);
+        $model = $this->createModelWithGatewayId($transporter, 'google/gemini-2.5-flash');
+
+        $result = $model->generateTextResult($this->createSimplePrompt());
+
+        $parts = $result->toMessage()->getParts();
+        $this->assertSame('vertex-sig-abc', $parts[0]->getThoughtSignature());
+    }
+
+    public function testExtractThoughtSignatureOpenAI(): void
+    {
+        $response = new Response(
+            200,
+            ['Content-Type' => 'application/json'],
+            json_encode([
+                'content' => [
+                    [
+                        'type' => 'reasoning',
+                        'text' => 'Thinking...',
+                        'providerMetadata' => [
+                            'openai' => ['reasoningEncryptedContent' => 'openai-enc-123'],
+                        ],
+                    ],
+                    ['type' => 'text', 'text' => 'Answer.'],
+                ],
+                'finishReason' => ['unified' => 'stop'],
+                'usage' => [],
+            ])
+        );
+        $transporter = new MockHttpTransporter($response);
+        $model = $this->createModelWithGatewayId($transporter, 'openai/o3-mini');
+
+        $result = $model->generateTextResult($this->createSimplePrompt());
+
+        $parts = $result->toMessage()->getParts();
+        $this->assertSame('openai-enc-123', $parts[0]->getThoughtSignature());
+    }
+
+    public function testExtractThoughtSignatureXAI(): void
+    {
+        $response = new Response(
+            200,
+            ['Content-Type' => 'application/json'],
+            json_encode([
+                'content' => [
+                    [
+                        'type' => 'reasoning',
+                        'text' => 'xAI thinking...',
+                        'providerMetadata' => [
+                            'xai' => ['reasoningEncryptedContent' => 'xai-enc-456'],
+                        ],
+                    ],
+                    ['type' => 'text', 'text' => 'xAI answer.'],
+                ],
+                'finishReason' => ['unified' => 'stop'],
+                'usage' => [],
+            ])
+        );
+        $transporter = new MockHttpTransporter($response);
+        $model = $this->createModelWithGatewayId($transporter, 'xai/grok-3');
+
+        $result = $model->generateTextResult($this->createSimplePrompt());
+
+        $parts = $result->toMessage()->getParts();
+        $this->assertSame('xai-enc-456', $parts[0]->getThoughtSignature());
+    }
+
+    public function testExtractThoughtSignatureDefaultProvider(): void
+    {
+        $response = new Response(
+            200,
+            ['Content-Type' => 'application/json'],
+            json_encode([
+                'content' => [
+                    [
+                        'type' => 'reasoning',
+                        'text' => 'Unknown provider thinking...',
+                        'providerMetadata' => [
+                            'someprovider' => ['signature' => 'default-sig-789'],
+                        ],
+                    ],
+                    ['type' => 'text', 'text' => 'Response.'],
+                ],
+                'finishReason' => ['unified' => 'stop'],
+                'usage' => [],
+            ])
+        );
+        $transporter = new MockHttpTransporter($response);
+        $model = $this->createModelWithGatewayId($transporter, 'someprovider/some-model');
+
+        $result = $model->generateTextResult($this->createSimplePrompt());
+
+        $parts = $result->toMessage()->getParts();
+        $this->assertSame('default-sig-789', $parts[0]->getThoughtSignature());
+    }
+
+    public function testExtractThoughtSignatureDeepSeekNoMetadata(): void
+    {
+        $response = new Response(
+            200,
+            ['Content-Type' => 'application/json'],
+            json_encode([
+                'content' => [
+                    [
+                        'type' => 'reasoning',
+                        'text' => 'DeepSeek thinking...',
+                    ],
+                    ['type' => 'text', 'text' => 'DeepSeek answer.'],
+                ],
+                'finishReason' => ['unified' => 'stop'],
+                'usage' => [],
+            ])
+        );
+        $transporter = new MockHttpTransporter($response);
+        $model = $this->createModelWithGatewayId($transporter, 'deepseek/deepseek-r1');
+
+        $result = $model->generateTextResult($this->createSimplePrompt());
+
+        $parts = $result->toMessage()->getParts();
+        $this->assertCount(2, $parts);
+        $this->assertTrue($parts[0]->getChannel()->isThought());
+        $this->assertNull($parts[0]->getThoughtSignature());
+        $this->assertTrue($parts[1]->getChannel()->isContent());
+        $this->assertNull($parts[1]->getThoughtSignature());
+    }
+
+    public function testThoughtSignatureOnTextPartForGoogle(): void
+    {
+        $response = new Response(
+            200,
+            ['Content-Type' => 'application/json'],
+            json_encode([
+                'content' => [
+                    [
+                        'type' => 'text',
+                        'text' => 'Text with signature.',
+                        'providerMetadata' => [
+                            'google' => ['thoughtSignature' => 'google-text-sig'],
+                        ],
+                    ],
+                ],
+                'finishReason' => ['unified' => 'stop'],
+                'usage' => [],
+            ])
+        );
+        $transporter = new MockHttpTransporter($response);
+        $model = $this->createModelWithGatewayId($transporter, 'google/gemini-2.5-flash');
+
+        $result = $model->generateTextResult($this->createSimplePrompt());
+
+        $parts = $result->toMessage()->getParts();
+        $this->assertCount(1, $parts);
+        $this->assertTrue($parts[0]->getChannel()->isContent());
+        $this->assertSame('Text with signature.', $parts[0]->getText());
+        $this->assertSame('google-text-sig', $parts[0]->getThoughtSignature());
+    }
+
+    public function testThoughtSignatureOnToolCallPart(): void
+    {
+        $response = new Response(
+            200,
+            ['Content-Type' => 'application/json'],
+            json_encode([
+                'content' => [
+                    [
+                        'type' => 'tool-call',
+                        'toolCallId' => 'call_1',
+                        'toolName' => 'get_weather',
+                        'input' => json_encode(['location' => 'Paris']),
+                        'providerMetadata' => [
+                            'google' => ['thoughtSignature' => 'google-tool-sig'],
+                        ],
+                    ],
+                ],
+                'finishReason' => ['unified' => 'tool-calls'],
+                'usage' => [],
+            ])
+        );
+        $transporter = new MockHttpTransporter($response);
+        $model = $this->createModelWithGatewayId($transporter, 'google/gemini-2.5-flash');
+
+        $result = $model->generateTextResult($this->createSimplePrompt());
+
+        $parts = $result->toMessage()->getParts();
+        $this->assertCount(1, $parts);
+        $this->assertNotNull($parts[0]->getFunctionCall());
+        $this->assertSame('google-tool-sig', $parts[0]->getThoughtSignature());
+    }
+
+    public function testThoughtSignatureOnFilePart(): void
+    {
+        $base64Data = base64_encode('fake-image-data');
+        $response = new Response(
+            200,
+            ['Content-Type' => 'application/json'],
+            json_encode([
+                'content' => [
+                    [
+                        'type' => 'file',
+                        'data' => 'data:image/png;base64,' . $base64Data,
+                        'mediaType' => 'image/png',
+                        'providerMetadata' => [
+                            'google' => ['thoughtSignature' => 'google-file-sig'],
+                        ],
+                    ],
+                ],
+                'finishReason' => ['unified' => 'stop'],
+                'usage' => [],
+            ])
+        );
+        $transporter = new MockHttpTransporter($response);
+        $model = $this->createModelWithGatewayId($transporter, 'google/gemini-2.5-flash');
+
+        $result = $model->generateTextResult($this->createSimplePrompt());
+
+        $parts = $result->toMessage()->getParts();
+        $this->assertCount(1, $parts);
+        $this->assertNotNull($parts[0]->getFile());
+        $this->assertSame('google-file-sig', $parts[0]->getThoughtSignature());
+    }
+
+    public function testReasoningOnlyResponseIsParsed(): void
+    {
+        $response = new Response(
+            200,
+            ['Content-Type' => 'application/json'],
+            json_encode([
+                'content' => [
+                    [
+                        'type' => 'reasoning',
+                        'text' => 'Just thinking, no answer yet.',
+                    ],
+                ],
+                'finishReason' => ['unified' => 'stop'],
+                'usage' => [],
+            ])
+        );
+        $transporter = new MockHttpTransporter($response);
+        $model = $this->createModel($transporter);
+
+        $result = $model->generateTextResult($this->createSimplePrompt());
+
+        $parts = $result->toMessage()->getParts();
+        $this->assertCount(1, $parts);
+        $this->assertTrue($parts[0]->getChannel()->isThought());
+        $this->assertSame('Just thinking, no answer yet.', $parts[0]->getText());
+    }
+
+    public function testReasoningPartWithEmptyText(): void
+    {
+        $response = new Response(
+            200,
+            ['Content-Type' => 'application/json'],
+            json_encode([
+                'content' => [
+                    [
+                        'type' => 'reasoning',
+                        'providerMetadata' => [
+                            'anthropic' => ['signature' => 'sig-empty'],
+                        ],
+                    ],
+                    ['type' => 'text', 'text' => 'Answer.'],
+                ],
+                'finishReason' => ['unified' => 'stop'],
+                'usage' => [],
+            ])
+        );
+        $transporter = new MockHttpTransporter($response);
+        $model = $this->createModel($transporter);
+
+        $result = $model->generateTextResult($this->createSimplePrompt());
+
+        $parts = $result->toMessage()->getParts();
+        $this->assertCount(2, $parts);
+        $this->assertTrue($parts[0]->getChannel()->isThought());
+        $this->assertSame('', $parts[0]->getText());
+        $this->assertSame('sig-empty', $parts[0]->getThoughtSignature());
+    }
+
+    public function testRequestBodyEmitsReasoningPartForThoughtChannelAnthropic(): void
+    {
+        $transporter = new MockHttpTransporter($this->createMockResponse());
+        $model = $this->createModel($transporter);
+
+        $prompt = [
+            new Message(
+                MessageRoleEnum::user(),
+                [new MessagePart('What is 2+2?')]
+            ),
+            new Message(
+                MessageRoleEnum::model(),
+                [
+                    new MessagePart(
+                        'Let me think...',
+                        MessagePartChannelEnum::thought(),
+                        'sig-anthropic-abc'
+                    ),
+                    new MessagePart('The answer is 4.'),
+                ]
+            ),
+            new Message(
+                MessageRoleEnum::user(),
+                [new MessagePart('Thanks')]
+            ),
+        ];
+
+        $model->generateTextResult($prompt);
+
+        $body = $transporter->getLastRequest()->getData();
+        $assistantContent = $body['prompt'][1]['content'];
+
+        $this->assertSame('reasoning', $assistantContent[0]['type']);
+        $this->assertSame('Let me think...', $assistantContent[0]['text']);
+        $this->assertSame(
+            ['anthropic' => ['signature' => 'sig-anthropic-abc']],
+            $assistantContent[0]['providerOptions']
+        );
+
+        $this->assertSame('text', $assistantContent[1]['type']);
+        $this->assertSame('The answer is 4.', $assistantContent[1]['text']);
+        $this->assertArrayNotHasKey('providerOptions', $assistantContent[1]);
+    }
+
+    public function testRequestBodyEmitsReasoningPartForThoughtChannelGoogle(): void
+    {
+        $transporter = new MockHttpTransporter($this->createMockResponse());
+        $model = $this->createModelWithGatewayId($transporter, 'google/gemini-2.5-flash');
+
+        $prompt = [
+            new Message(
+                MessageRoleEnum::user(),
+                [new MessagePart('Explain')]
+            ),
+            new Message(
+                MessageRoleEnum::model(),
+                [
+                    new MessagePart(
+                        'Reasoning...',
+                        MessagePartChannelEnum::thought(),
+                        'google-sig-xyz'
+                    ),
+                    new MessagePart('Result.'),
+                ]
+            ),
+            new Message(
+                MessageRoleEnum::user(),
+                [new MessagePart('OK')]
+            ),
+        ];
+
+        $model->generateTextResult($prompt);
+
+        $body = $transporter->getLastRequest()->getData();
+        $assistantContent = $body['prompt'][1]['content'];
+
+        $this->assertSame('reasoning', $assistantContent[0]['type']);
+        $this->assertSame(
+            ['google' => ['thoughtSignature' => 'google-sig-xyz']],
+            $assistantContent[0]['providerOptions']
+        );
+    }
+
+    public function testRequestBodyEmitsReasoningPartForThoughtChannelOpenAI(): void
+    {
+        $transporter = new MockHttpTransporter($this->createMockResponse());
+        $model = $this->createModelWithGatewayId($transporter, 'openai/o3-mini');
+
+        $prompt = [
+            new Message(
+                MessageRoleEnum::user(),
+                [new MessagePart('Think')]
+            ),
+            new Message(
+                MessageRoleEnum::model(),
+                [
+                    new MessagePart(
+                        'Thinking...',
+                        MessagePartChannelEnum::thought(),
+                        'openai-enc-123'
+                    ),
+                    new MessagePart('Done.'),
+                ]
+            ),
+            new Message(
+                MessageRoleEnum::user(),
+                [new MessagePart('OK')]
+            ),
+        ];
+
+        $model->generateTextResult($prompt);
+
+        $body = $transporter->getLastRequest()->getData();
+        $assistantContent = $body['prompt'][1]['content'];
+
+        $this->assertSame('reasoning', $assistantContent[0]['type']);
+        $this->assertSame(
+            ['openai' => ['reasoningEncryptedContent' => 'openai-enc-123']],
+            $assistantContent[0]['providerOptions']
+        );
+    }
+
+    public function testRequestBodyEmitsReasoningPartForThoughtChannelXAI(): void
+    {
+        $transporter = new MockHttpTransporter($this->createMockResponse());
+        $model = $this->createModelWithGatewayId($transporter, 'xai/grok-3');
+
+        $prompt = [
+            new Message(
+                MessageRoleEnum::user(),
+                [new MessagePart('Think')]
+            ),
+            new Message(
+                MessageRoleEnum::model(),
+                [
+                    new MessagePart(
+                        'xAI thinking...',
+                        MessagePartChannelEnum::thought(),
+                        'xai-enc-456'
+                    ),
+                    new MessagePart('xAI answer.'),
+                ]
+            ),
+            new Message(
+                MessageRoleEnum::user(),
+                [new MessagePart('OK')]
+            ),
+        ];
+
+        $model->generateTextResult($prompt);
+
+        $body = $transporter->getLastRequest()->getData();
+        $assistantContent = $body['prompt'][1]['content'];
+
+        $this->assertSame('reasoning', $assistantContent[0]['type']);
+        $this->assertSame(
+            ['xai' => ['reasoningEncryptedContent' => 'xai-enc-456']],
+            $assistantContent[0]['providerOptions']
+        );
+    }
+
+    public function testRequestBodyEmitsReasoningPartForThoughtChannelDefaultProvider(): void
+    {
+        $transporter = new MockHttpTransporter($this->createMockResponse());
+        $model = $this->createModelWithGatewayId($transporter, 'someprovider/some-model');
+
+        $prompt = [
+            new Message(
+                MessageRoleEnum::user(),
+                [new MessagePart('Think')]
+            ),
+            new Message(
+                MessageRoleEnum::model(),
+                [
+                    new MessagePart(
+                        'Thinking...',
+                        MessagePartChannelEnum::thought(),
+                        'default-sig-789'
+                    ),
+                    new MessagePart('Answer.'),
+                ]
+            ),
+            new Message(
+                MessageRoleEnum::user(),
+                [new MessagePart('OK')]
+            ),
+        ];
+
+        $model->generateTextResult($prompt);
+
+        $body = $transporter->getLastRequest()->getData();
+        $assistantContent = $body['prompt'][1]['content'];
+
+        $this->assertSame('reasoning', $assistantContent[0]['type']);
+        $this->assertSame(
+            ['someprovider' => ['signature' => 'default-sig-789']],
+            $assistantContent[0]['providerOptions']
+        );
+    }
+
+    public function testRequestBodyEmitsReasoningPartWithoutSignature(): void
+    {
+        $transporter = new MockHttpTransporter($this->createMockResponse());
+        $model = $this->createModelWithGatewayId($transporter, 'deepseek/deepseek-r1');
+
+        $prompt = [
+            new Message(
+                MessageRoleEnum::user(),
+                [new MessagePart('Think')]
+            ),
+            new Message(
+                MessageRoleEnum::model(),
+                [
+                    new MessagePart(
+                        'DeepSeek thinking...',
+                        MessagePartChannelEnum::thought()
+                    ),
+                    new MessagePart('DeepSeek answer.'),
+                ]
+            ),
+            new Message(
+                MessageRoleEnum::user(),
+                [new MessagePart('OK')]
+            ),
+        ];
+
+        $model->generateTextResult($prompt);
+
+        $body = $transporter->getLastRequest()->getData();
+        $assistantContent = $body['prompt'][1]['content'];
+
+        $this->assertSame('reasoning', $assistantContent[0]['type']);
+        $this->assertSame('DeepSeek thinking...', $assistantContent[0]['text']);
+        $this->assertArrayNotHasKey('providerOptions', $assistantContent[0]);
+
+        $this->assertSame('text', $assistantContent[1]['type']);
+        $this->assertArrayNotHasKey('providerOptions', $assistantContent[1]);
+    }
+
+    public function testRequestBodyIncludesSignatureOnNonReasoningTextPart(): void
+    {
+        $transporter = new MockHttpTransporter($this->createMockResponse());
+        $model = $this->createModelWithGatewayId($transporter, 'google/gemini-2.5-flash');
+
+        $prompt = [
+            new Message(
+                MessageRoleEnum::user(),
+                [new MessagePart('Explain')]
+            ),
+            new Message(
+                MessageRoleEnum::model(),
+                [
+                    new MessagePart(
+                        'Text with signature.',
+                        null,
+                        'google-text-sig'
+                    ),
+                ]
+            ),
+            new Message(
+                MessageRoleEnum::user(),
+                [new MessagePart('OK')]
+            ),
+        ];
+
+        $model->generateTextResult($prompt);
+
+        $body = $transporter->getLastRequest()->getData();
+        $assistantContent = $body['prompt'][1]['content'];
+
+        $this->assertSame('text', $assistantContent[0]['type']);
+        $this->assertSame('Text with signature.', $assistantContent[0]['text']);
+        $this->assertSame(
+            ['google' => ['thoughtSignature' => 'google-text-sig']],
+            $assistantContent[0]['providerOptions']
+        );
+    }
+
+    public function testRequestBodyIncludesSignatureOnToolCallPart(): void
+    {
+        $transporter = new MockHttpTransporter($this->createMockResponse());
+        $model = $this->createModelWithGatewayId($transporter, 'google/gemini-2.5-flash');
+
+        $prompt = [
+            new Message(
+                MessageRoleEnum::user(),
+                [new MessagePart('Get weather')]
+            ),
+            new Message(
+                MessageRoleEnum::model(),
+                [
+                    new MessagePart(
+                        new FunctionCall('call_1', 'get_weather', ['location' => 'Paris']),
+                        null,
+                        'google-tool-sig'
+                    ),
+                ]
+            ),
+            new Message(
+                MessageRoleEnum::user(),
+                [
+                    new MessagePart(
+                        new FunctionResponse('call_1', 'get_weather', ['temp' => 22])
+                    ),
+                ]
+            ),
+        ];
+
+        $model->generateTextResult($prompt);
+
+        $body = $transporter->getLastRequest()->getData();
+        $assistantContent = $body['prompt'][1]['content'];
+
+        $this->assertSame('tool-call', $assistantContent[0]['type']);
+        $this->assertSame('call_1', $assistantContent[0]['toolCallId']);
+        $this->assertSame(
+            ['google' => ['thoughtSignature' => 'google-tool-sig']],
+            $assistantContent[0]['providerOptions']
+        );
+    }
+
+    public function testRequestBodyIncludesSignatureOnFilePart(): void
+    {
+        $transporter = new MockHttpTransporter($this->createMockResponse());
+        $model = $this->createModelWithGatewayId($transporter, 'google/gemini-2.5-flash');
+
+        $base64Data = base64_encode('fake-image-data');
+        $imageFile = new File($base64Data, 'image/png');
+
+        $prompt = [
+            new Message(
+                MessageRoleEnum::user(),
+                [new MessagePart('Show me')]
+            ),
+            new Message(
+                MessageRoleEnum::model(),
+                [
+                    new MessagePart(
+                        $imageFile,
+                        null,
+                        'google-file-sig'
+                    ),
+                ]
+            ),
+            new Message(
+                MessageRoleEnum::user(),
+                [new MessagePart('OK')]
+            ),
+        ];
+
+        $model->generateTextResult($prompt);
+
+        $body = $transporter->getLastRequest()->getData();
+        $assistantContent = $body['prompt'][1]['content'];
+
+        $this->assertSame('file', $assistantContent[0]['type']);
+        $this->assertSame(
+            ['google' => ['thoughtSignature' => 'google-file-sig']],
+            $assistantContent[0]['providerOptions']
+        );
+    }
+
+    public function testRoundTripReasoningPartAnthropicSignature(): void
+    {
+        $responseWithReasoning = new Response(
+            200,
+            ['Content-Type' => 'application/json'],
+            json_encode([
+                'content' => [
+                    [
+                        'type' => 'reasoning',
+                        'text' => 'Let me think...',
+                        'providerMetadata' => [
+                            'anthropic' => ['signature' => 'sig-round-trip'],
+                        ],
+                    ],
+                    ['type' => 'text', 'text' => 'The answer is 4.'],
+                ],
+                'finishReason' => ['unified' => 'stop'],
+                'usage' => ['promptTokens' => 10, 'completionTokens' => 20],
+            ])
+        );
+
+        $finalResponse = new Response(
+            200,
+            ['Content-Type' => 'application/json'],
+            json_encode([
+                'content' => [['type' => 'text', 'text' => 'You are welcome.']],
+                'finishReason' => ['unified' => 'stop'],
+                'usage' => ['promptTokens' => 30, 'completionTokens' => 5],
+            ])
+        );
+
+        $transporter = new MockHttpTransporter($responseWithReasoning, $finalResponse);
+        $model = $this->createModel($transporter);
+
+        $userMessage = [
+            new Message(
+                MessageRoleEnum::user(),
+                [new MessagePart('What is 2+2?')]
+            ),
+        ];
+        $result1 = $model->generateTextResult($userMessage);
+
+        $parts = $result1->toMessage()->getParts();
+        $this->assertCount(2, $parts);
+        $this->assertTrue($parts[0]->getChannel()->isThought());
+        $this->assertSame('sig-round-trip', $parts[0]->getThoughtSignature());
+
+        $multiTurnPrompt = [
+            $userMessage[0],
+            $result1->toMessage(),
+            new Message(
+                MessageRoleEnum::user(),
+                [new MessagePart('Thanks')]
+            ),
+        ];
+        $model->generateTextResult($multiTurnPrompt);
+
+        $body = $transporter->getRequest(1)->getData();
+        $assistantContent = $body['prompt'][1]['content'];
+
+        $this->assertSame('reasoning', $assistantContent[0]['type']);
+        $this->assertSame('Let me think...', $assistantContent[0]['text']);
+        $this->assertSame(
+            ['anthropic' => ['signature' => 'sig-round-trip']],
+            $assistantContent[0]['providerOptions']
+        );
+
+        $this->assertSame('text', $assistantContent[1]['type']);
+        $this->assertSame('The answer is 4.', $assistantContent[1]['text']);
+        $this->assertArrayNotHasKey('providerOptions', $assistantContent[1]);
+    }
+
+    public function testRoundTripReasoningPartGoogleSignature(): void
+    {
+        $responseWithReasoning = new Response(
+            200,
+            ['Content-Type' => 'application/json'],
+            json_encode([
+                'content' => [
+                    [
+                        'type' => 'reasoning',
+                        'text' => 'Google reasoning...',
+                        'providerMetadata' => [
+                            'google' => ['thoughtSignature' => 'google-rt-sig'],
+                        ],
+                    ],
+                    [
+                        'type' => 'text',
+                        'text' => 'Google answer.',
+                        'providerMetadata' => [
+                            'google' => ['thoughtSignature' => 'google-text-rt-sig'],
+                        ],
+                    ],
+                ],
+                'finishReason' => ['unified' => 'stop'],
+                'usage' => [],
+            ])
+        );
+
+        $finalResponse = new Response(
+            200,
+            ['Content-Type' => 'application/json'],
+            json_encode([
+                'content' => [['type' => 'text', 'text' => 'Done.']],
+                'finishReason' => ['unified' => 'stop'],
+                'usage' => [],
+            ])
+        );
+
+        $transporter = new MockHttpTransporter($responseWithReasoning, $finalResponse);
+        $model = $this->createModelWithGatewayId($transporter, 'google/gemini-2.5-flash');
+
+        $userMessage = [
+            new Message(
+                MessageRoleEnum::user(),
+                [new MessagePart('Think')]
+            ),
+        ];
+        $result1 = $model->generateTextResult($userMessage);
+
+        $multiTurnPrompt = [
+            $userMessage[0],
+            $result1->toMessage(),
+            new Message(
+                MessageRoleEnum::user(),
+                [new MessagePart('OK')]
+            ),
+        ];
+        $model->generateTextResult($multiTurnPrompt);
+
+        $body = $transporter->getRequest(1)->getData();
+        $assistantContent = $body['prompt'][1]['content'];
+
+        $this->assertSame('reasoning', $assistantContent[0]['type']);
+        $this->assertSame(
+            ['google' => ['thoughtSignature' => 'google-rt-sig']],
+            $assistantContent[0]['providerOptions']
+        );
+
+        $this->assertSame('text', $assistantContent[1]['type']);
+        $this->assertSame(
+            ['google' => ['thoughtSignature' => 'google-text-rt-sig']],
+            $assistantContent[1]['providerOptions']
+        );
+    }
+
+    public function testRoundTripReasoningPartOpenAISignature(): void
+    {
+        $responseWithReasoning = new Response(
+            200,
+            ['Content-Type' => 'application/json'],
+            json_encode([
+                'content' => [
+                    [
+                        'type' => 'reasoning',
+                        'text' => 'OpenAI reasoning...',
+                        'providerMetadata' => [
+                            'openai' => ['reasoningEncryptedContent' => 'openai-rt-enc'],
+                        ],
+                    ],
+                    ['type' => 'text', 'text' => 'OpenAI answer.'],
+                ],
+                'finishReason' => ['unified' => 'stop'],
+                'usage' => [],
+            ])
+        );
+
+        $finalResponse = new Response(
+            200,
+            ['Content-Type' => 'application/json'],
+            json_encode([
+                'content' => [['type' => 'text', 'text' => 'Done.']],
+                'finishReason' => ['unified' => 'stop'],
+                'usage' => [],
+            ])
+        );
+
+        $transporter = new MockHttpTransporter($responseWithReasoning, $finalResponse);
+        $model = $this->createModelWithGatewayId($transporter, 'openai/o3-mini');
+
+        $userMessage = [
+            new Message(
+                MessageRoleEnum::user(),
+                [new MessagePart('Think')]
+            ),
+        ];
+        $result1 = $model->generateTextResult($userMessage);
+
+        $multiTurnPrompt = [
+            $userMessage[0],
+            $result1->toMessage(),
+            new Message(
+                MessageRoleEnum::user(),
+                [new MessagePart('OK')]
+            ),
+        ];
+        $model->generateTextResult($multiTurnPrompt);
+
+        $body = $transporter->getRequest(1)->getData();
+        $assistantContent = $body['prompt'][1]['content'];
+
+        $this->assertSame('reasoning', $assistantContent[0]['type']);
+        $this->assertSame(
+            ['openai' => ['reasoningEncryptedContent' => 'openai-rt-enc']],
+            $assistantContent[0]['providerOptions']
+        );
+    }
+
+    public function testRoundTripReasoningPartXAISignature(): void
+    {
+        $responseWithReasoning = new Response(
+            200,
+            ['Content-Type' => 'application/json'],
+            json_encode([
+                'content' => [
+                    [
+                        'type' => 'reasoning',
+                        'text' => 'xAI reasoning...',
+                        'providerMetadata' => [
+                            'xai' => ['reasoningEncryptedContent' => 'xai-rt-enc'],
+                        ],
+                    ],
+                    ['type' => 'text', 'text' => 'xAI answer.'],
+                ],
+                'finishReason' => ['unified' => 'stop'],
+                'usage' => [],
+            ])
+        );
+
+        $finalResponse = new Response(
+            200,
+            ['Content-Type' => 'application/json'],
+            json_encode([
+                'content' => [['type' => 'text', 'text' => 'Done.']],
+                'finishReason' => ['unified' => 'stop'],
+                'usage' => [],
+            ])
+        );
+
+        $transporter = new MockHttpTransporter($responseWithReasoning, $finalResponse);
+        $model = $this->createModelWithGatewayId($transporter, 'xai/grok-3');
+
+        $userMessage = [
+            new Message(
+                MessageRoleEnum::user(),
+                [new MessagePart('Think')]
+            ),
+        ];
+        $result1 = $model->generateTextResult($userMessage);
+
+        $multiTurnPrompt = [
+            $userMessage[0],
+            $result1->toMessage(),
+            new Message(
+                MessageRoleEnum::user(),
+                [new MessagePart('OK')]
+            ),
+        ];
+        $model->generateTextResult($multiTurnPrompt);
+
+        $body = $transporter->getRequest(1)->getData();
+        $assistantContent = $body['prompt'][1]['content'];
+
+        $this->assertSame('reasoning', $assistantContent[0]['type']);
+        $this->assertSame(
+            ['xai' => ['reasoningEncryptedContent' => 'xai-rt-enc']],
+            $assistantContent[0]['providerOptions']
+        );
+    }
+
+    public function testRoundTripReasoningPartDeepSeekNoSignature(): void
+    {
+        $responseWithReasoning = new Response(
+            200,
+            ['Content-Type' => 'application/json'],
+            json_encode([
+                'content' => [
+                    [
+                        'type' => 'reasoning',
+                        'text' => 'DeepSeek reasoning...',
+                    ],
+                    ['type' => 'text', 'text' => 'DeepSeek answer.'],
+                ],
+                'finishReason' => ['unified' => 'stop'],
+                'usage' => [],
+            ])
+        );
+
+        $finalResponse = new Response(
+            200,
+            ['Content-Type' => 'application/json'],
+            json_encode([
+                'content' => [['type' => 'text', 'text' => 'Done.']],
+                'finishReason' => ['unified' => 'stop'],
+                'usage' => [],
+            ])
+        );
+
+        $transporter = new MockHttpTransporter($responseWithReasoning, $finalResponse);
+        $model = $this->createModelWithGatewayId($transporter, 'deepseek/deepseek-r1');
+
+        $userMessage = [
+            new Message(
+                MessageRoleEnum::user(),
+                [new MessagePart('Think')]
+            ),
+        ];
+        $result1 = $model->generateTextResult($userMessage);
+
+        $multiTurnPrompt = [
+            $userMessage[0],
+            $result1->toMessage(),
+            new Message(
+                MessageRoleEnum::user(),
+                [new MessagePart('OK')]
+            ),
+        ];
+        $model->generateTextResult($multiTurnPrompt);
+
+        $body = $transporter->getRequest(1)->getData();
+        $assistantContent = $body['prompt'][1]['content'];
+
+        $this->assertSame('reasoning', $assistantContent[0]['type']);
+        $this->assertSame('DeepSeek reasoning...', $assistantContent[0]['text']);
+        $this->assertArrayNotHasKey('providerOptions', $assistantContent[0]);
+
+        $this->assertSame('text', $assistantContent[1]['type']);
+        $this->assertArrayNotHasKey('providerOptions', $assistantContent[1]);
     }
 }

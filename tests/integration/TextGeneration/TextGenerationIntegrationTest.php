@@ -11,6 +11,7 @@ use WordPress\AiClient\AiClient;
 use WordPress\AiClient\Messages\DTO\Message;
 use WordPress\AiClient\Messages\DTO\MessagePart;
 use WordPress\AiClient\Messages\Enums\MessageRoleEnum;
+use WordPress\AiClient\Providers\Models\DTO\ModelConfig;
 use WordPress\AiClient\Results\DTO\TokenUsage;
 use WordPress\AiClient\Tools\DTO\FunctionCall;
 use WordPress\AiClient\Tools\DTO\FunctionDeclaration;
@@ -279,6 +280,85 @@ class TextGenerationIntegrationTest extends TestCase
         $this->assertNotEmpty($text);
         $this->assertStringContainsStringIgnoringCase('Austin', $text);
 
+        $this->assertTokenUsage($modelId, $turn2Result->getTokenUsage());
+    }
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public function provideReasoningModels(): array
+    {
+        return [
+            'Anthropic' => ['claude-sonnet-4.6'],
+            'Google'    => ['gemini-3-pro-preview'],
+            'OpenAI'    => ['o3-mini'],
+        ];
+    }
+
+    /**
+     * @dataProvider provideReasoningModels
+     */
+    public function testWithReasoning(string $modelId): void
+    {
+        $model = AiGatewayProvider::model($modelId);
+
+        $providerOptions = [];
+        switch ($modelId) {
+            case 'claude-sonnet-4.6':
+                $providerOptions = ['anthropic' => ['thinking' => ['type' => 'adaptive'], 'effort' => 'high']];
+                break;
+            case 'gemini-3-pro-preview':
+                $providerOptions = ['google' => ['thinkingConfig' => ['includeThoughts' => true]]];
+                break;
+            case 'o3-mini':
+                $providerOptions = ['openai' => ['reasoningEffort' => 'medium']];
+                break;
+        }
+
+        $modelConfig = new ModelConfig();
+        $modelConfig->setCustomOption('providerOptions', $providerOptions);
+
+        $userMessage = new Message(
+            MessageRoleEnum::user(),
+            [new MessagePart(
+                'A farmer has 15 apples. He gives 3 to each of his 4 neighbors. '
+                . 'How many apples does he have left? Think step by step.'
+            )]
+        );
+
+        $turn1Result = AiClient::prompt($userMessage)
+            ->usingModel($model)
+            ->usingModelConfig($modelConfig)
+            ->generateTextResult();
+
+        $turn1Message = $turn1Result->toMessage();
+
+        $hasThoughtPart = false;
+        foreach ($turn1Message->getParts() as $part) {
+            if ($part->getChannel()->isThought()) {
+                $hasThoughtPart = true;
+                break;
+            }
+        }
+        $this->assertTrue($hasThoughtPart, 'Response should contain at least one thought-channel part.');
+
+        $tokenUsage = $turn1Result->getTokenUsage();
+        $this->assertTokenUsage($modelId, $tokenUsage);
+        if ($modelId === 'claude-sonnet-4.6') {
+            $this->assertNull($tokenUsage->getThoughtTokens(), 'The Anthropic API does not report thought tokens.');
+        } else {
+            $this->assertNotNull($tokenUsage->getThoughtTokens(), 'Thought tokens should be reported.');
+            $this->assertGreaterThan(0, $tokenUsage->getThoughtTokens());
+        }
+
+        $turn2Result = AiClient::prompt()
+            ->usingModel($model)
+            ->usingModelConfig($modelConfig)
+            ->withHistory($userMessage, $turn1Message)
+            ->withText('Now double the remaining number of apples. What is the result?')
+            ->generateTextResult();
+
+        $this->assertNotEmpty($turn2Result->toText());
         $this->assertTokenUsage($modelId, $turn2Result->getTokenUsage());
     }
 }

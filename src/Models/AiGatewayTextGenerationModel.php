@@ -17,6 +17,7 @@ use Vercel\AiGatewayProvider\Provider\AiGatewayProvider;
 use WordPress\AiClient\Files\DTO\File;
 use WordPress\AiClient\Messages\DTO\Message;
 use WordPress\AiClient\Messages\DTO\MessagePart;
+use WordPress\AiClient\Messages\Enums\MessagePartChannelEnum;
 use WordPress\AiClient\Messages\Enums\MessageRoleEnum;
 use WordPress\AiClient\Messages\Enums\ModalityEnum;
 use WordPress\AiClient\Providers\ApiBasedImplementation\AbstractApiBasedModel;
@@ -48,7 +49,8 @@ use WordPress\AiClient\Tools\DTO\FunctionDeclaration;
  *     toolName?: string,
  *     input?: mixed,
  *     data?: string,
- *     mediaType?: string
+ *     mediaType?: string,
+ *     providerMetadata?: array<string, array<string, mixed>>
  * }
  * @phpstan-type ResponseData array{
  *     content?: ResponseContentPart|list<ResponseContentPart>,
@@ -103,6 +105,22 @@ class AiGatewayTextGenerationModel extends AbstractApiBasedModel implements Text
     protected function getGatewayModelId(): string
     {
         return $this->gatewayModelId;
+    }
+
+    /**
+     * Extracts the provider prefix from the gateway model ID.
+     *
+     * @since n.e.x.t
+     *
+     * @return string The provider name (e.g. "anthropic"), or empty string if no slash present.
+     */
+    private function getProviderName(): string
+    {
+        $slashPos = strpos($this->gatewayModelId, '/');
+        if ($slashPos === false) {
+            return '';
+        }
+        return substr($this->gatewayModelId, 0, $slashPos);
     }
 
     /**
@@ -336,34 +354,64 @@ class AiGatewayTextGenerationModel extends AbstractApiBasedModel implements Text
      */
     private function buildContentPart(MessagePart $part): ?array
     {
+        $isThought = $part->getChannel()->isThought();
+        $thoughtSignature = $part->getThoughtSignature();
+
         $text = $part->getText();
         if ($text !== null) {
-            return [
+            if ($isThought) {
+                $contentPart = [
+                    'type' => 'reasoning',
+                    'text' => $text,
+                ];
+                if ($thoughtSignature !== null) {
+                    $contentPart['providerOptions'] = $this->buildThoughtSignatureProviderOptions($thoughtSignature);
+                }
+                return $contentPart;
+            }
+
+            $contentPart = [
                 'type' => 'text',
                 'text' => $text,
             ];
+            if ($thoughtSignature !== null) {
+                $contentPart['providerOptions'] = $this->buildThoughtSignatureProviderOptions($thoughtSignature);
+            }
+            return $contentPart;
         }
 
         $file = $part->getFile();
         if ($file !== null) {
             $mediaType = $file->getMimeType();
+            $fileContentPart = null;
 
             $url = $file->getUrl();
             if ($url !== null) {
-                return [
+                $fileContentPart = [
                     'type' => 'file',
                     'data' => $url,
                     'mediaType' => $mediaType,
                 ];
             }
 
-            $dataUri = $file->getDataUri();
-            if ($dataUri !== null) {
-                return [
-                    'type' => 'file',
-                    'data' => $dataUri,
-                    'mediaType' => $mediaType,
-                ];
+            if ($fileContentPart === null) {
+                $dataUri = $file->getDataUri();
+                if ($dataUri !== null) {
+                    $fileContentPart = [
+                        'type' => 'file',
+                        'data' => $dataUri,
+                        'mediaType' => $mediaType,
+                    ];
+                }
+            }
+
+            if ($fileContentPart !== null) {
+                if ($thoughtSignature !== null) {
+                    $fileContentPart['providerOptions'] = $this->buildThoughtSignatureProviderOptions(
+                        $thoughtSignature
+                    );
+                }
+                return $fileContentPart;
             }
         }
 
@@ -377,6 +425,9 @@ class AiGatewayTextGenerationModel extends AbstractApiBasedModel implements Text
             $args = $functionCall->getArgs();
             if ($args !== null) {
                 $toolCall['input'] = $args;
+            }
+            if ($thoughtSignature !== null) {
+                $toolCall['providerOptions'] = $this->buildThoughtSignatureProviderOptions($thoughtSignature);
             }
             return $toolCall;
         }
@@ -455,10 +506,27 @@ class AiGatewayTextGenerationModel extends AbstractApiBasedModel implements Text
                 continue;
             }
 
-            if ($contentPart['type'] === 'text' && isset($contentPart['text'])) {
-                $parts[] = new MessagePart($contentPart['text']);
+            $thoughtSignature = $this->extractThoughtSignature($contentPart);
+
+            if ($contentPart['type'] === 'reasoning') {
+                $text = $contentPart['text'] ?? '';
+                $parts[] = new MessagePart(
+                    $text,
+                    MessagePartChannelEnum::thought(),
+                    $thoughtSignature
+                );
+            } elseif ($contentPart['type'] === 'text' && isset($contentPart['text'])) {
+                $parts[] = new MessagePart(
+                    $contentPart['text'],
+                    null,
+                    $thoughtSignature
+                );
             } elseif ($contentPart['type'] === 'file' && isset($contentPart['data'], $contentPart['mediaType'])) {
-                $parts[] = new MessagePart(new File($contentPart['data'], $contentPart['mediaType']));
+                $parts[] = new MessagePart(
+                    new File($contentPart['data'], $contentPart['mediaType']),
+                    null,
+                    $thoughtSignature
+                );
             } elseif ($contentPart['type'] === 'tool-call') {
                 $rawInput = $contentPart['input'] ?? null;
                 $parts[] = new MessagePart(
@@ -466,7 +534,9 @@ class AiGatewayTextGenerationModel extends AbstractApiBasedModel implements Text
                         $contentPart['toolCallId'] ?? null,
                         $contentPart['toolName'] ?? null,
                         is_string($rawInput) ? json_decode($rawInput, true) : $rawInput
-                    )
+                    ),
+                    null,
+                    $thoughtSignature
                 );
             }
         }
@@ -481,6 +551,101 @@ class AiGatewayTextGenerationModel extends AbstractApiBasedModel implements Text
         }
 
         return $parts;
+    }
+
+    /**
+     * Builds the correct providerMetadata shape for a thought signature based on the current provider.
+     *
+     * @since n.e.x.t
+     *
+     * @param string $thoughtSignature The thought signature value.
+     * @return array<string, array<string, string>> The providerMetadata array.
+     */
+    private function buildThoughtSignatureProviderOptions(string $thoughtSignature): array
+    {
+        $providerName = $this->getProviderName();
+
+        switch ($providerName) {
+            case 'google':
+                return [$providerName => ['thoughtSignature' => $thoughtSignature]];
+
+            case 'anthropic':
+                return [$providerName => ['signature' => $thoughtSignature]];
+
+            case 'openai':
+            case 'xai':
+                return [$providerName => ['reasoningEncryptedContent' => $thoughtSignature]];
+
+            default:
+                // TODO: Support other providers' thought signatures. This is an assumption that won't always hold.
+                return [$providerName => ['signature' => $thoughtSignature]];
+        }
+    }
+
+    /**
+     * Extracts the thought signature from a content part's provider metadata.
+     *
+     * @since n.e.x.t
+     *
+     * @param ResponseContentPart $contentPart The content part from the response.
+     * @return string|null The thought signature, or null if not present.
+     */
+    private function extractThoughtSignature(array $contentPart): ?string
+    {
+        if (!isset($contentPart['providerMetadata']) || !is_array($contentPart['providerMetadata'])) {
+            return null;
+        }
+
+        $metadata = $contentPart['providerMetadata'];
+
+        $providerName = $this->getProviderName();
+        $providerData = $metadata[$providerName] ?? null;
+
+        switch ($providerName) {
+            case 'google':
+                /*
+                 * The AI Gateway may route "google" requests through "vertex",
+                 * so the response metadata can appear under either key.
+                 */
+                if (!is_array($providerData) || !isset($providerData['thoughtSignature'])) {
+                    $vertexData = $metadata['vertex'] ?? null;
+                    if (is_array($vertexData)) {
+                        $providerData = $vertexData;
+                    }
+                }
+                if (!is_array($providerData)) {
+                    return null;
+                }
+                return isset($providerData['thoughtSignature']) && is_string($providerData['thoughtSignature'])
+                    ? $providerData['thoughtSignature']
+                    : null;
+
+            case 'anthropic':
+                if (!is_array($providerData)) {
+                    return null;
+                }
+                return isset($providerData['signature']) && is_string($providerData['signature'])
+                    ? $providerData['signature']
+                    : null;
+
+            case 'openai':
+            case 'xai':
+                if (!is_array($providerData)) {
+                    return null;
+                }
+                $key = 'reasoningEncryptedContent';
+                return isset($providerData[$key]) && is_string($providerData[$key])
+                    ? $providerData[$key]
+                    : null;
+
+            default:
+                if (!is_array($providerData)) {
+                    return null;
+                }
+                return isset($providerData['signature']) && is_string($providerData['signature'])
+                    ? $providerData['signature']
+                    : null;
+        }
     }
 
     /**
@@ -528,6 +693,7 @@ class AiGatewayTextGenerationModel extends AbstractApiBasedModel implements Text
     {
         $promptTokens = 0;
         $completionTokens = 0;
+        $thoughtTokens = null;
 
         if (isset($data['usage']) && is_array($data['usage'])) {
             $usage = $data['usage'];
@@ -542,6 +708,9 @@ class AiGatewayTextGenerationModel extends AbstractApiBasedModel implements Text
             $outputTokens = $usage['outputTokens'] ?? null;
             if (is_array($outputTokens) && isset($outputTokens['total']) && is_numeric($outputTokens['total'])) {
                 $completionTokens = (int) $outputTokens['total'];
+                if (isset($outputTokens['reasoning']) && is_numeric($outputTokens['reasoning'])) {
+                    $thoughtTokens = (int) $outputTokens['reasoning'];
+                }
             } elseif (isset($usage['completionTokens']) && is_numeric($usage['completionTokens'])) {
                 $completionTokens = (int) $usage['completionTokens'];
             }
@@ -550,7 +719,8 @@ class AiGatewayTextGenerationModel extends AbstractApiBasedModel implements Text
         return new TokenUsage(
             $promptTokens,
             $completionTokens,
-            $promptTokens + $completionTokens
+            $promptTokens + $completionTokens,
+            $thoughtTokens
         );
     }
 }
