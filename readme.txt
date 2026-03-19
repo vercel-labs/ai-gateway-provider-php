@@ -41,9 +41,11 @@ The AI Gateway gives you access to more than 100 models from over 20 providers, 
 
 You can access all of these and many more directly through the AI Gateway, drastically simplifying your setup. For a full list of models, [browse the official AI Gateway models list](https://vercel.com/ai-gateway/models).
 
-= Terms =
+= External Services =
 
-[Vercel AI Product Terms](https://vercel.com/legal/ai-product-terms)
+This plugin connects to the AI Gateway API for inference.
+
+See the [Vercel AI Product Terms](https://vercel.com/legal/ai-product-terms) and the [Vercel Privacy Policy](https://vercel.com/legal/privacy-policy).
 
 == Installation ==
 
