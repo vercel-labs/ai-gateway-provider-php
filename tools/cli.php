@@ -23,6 +23,7 @@ use WordPress\AiClient\AiClient;
 use WordPress\AiClient\Files\DTO\File;
 use WordPress\AiClient\Providers\Http\Exception\ResponseException;
 use WordPress\AiClient\Providers\Models\DTO\ModelConfig;
+use FelixArntz\TerminalImage\TerminalImage;
 
 require_once dirname(__DIR__) . '/vendor/autoload.php';
 
@@ -91,10 +92,13 @@ function saveImageFile(File $imageFile): string
     $now = microtime(true);
     $filename = 'image-' . date('Y-m-d-His', (int) $now) . '-' . sprintf('%03d', ($now - floor($now)) * 1000) . '.' . $extension;
     $outputPath = $outputDir . '/' . $filename;
-    $bytes = file_put_contents($outputPath, base64_decode($base64));
+    $imageBuffer = base64_decode($base64);
+    $bytes = file_put_contents($outputPath, $imageBuffer);
     if ($bytes === false) {
         logError("Failed to write image to {$outputPath}.");
     }
+
+    printOutput(TerminalImage::buffer($imageBuffer));
 
     return $outputPath;
 }

@@ -26,6 +26,7 @@
     },
     "require-dev": {
         "dealerdirect/phpcodesniffer-composer-installer": "^1.0",
+        "felixarntz/terminal-image": "^1.0",
         "guzzlehttp/guzzle": "^7.0",
         "phpcompatibility/php-compatibility": "dev-develop",
         "phpstan/phpstan": "~2.1",

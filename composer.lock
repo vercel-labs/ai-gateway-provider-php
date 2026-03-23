@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "7c773a57cf252d6acd82d9130ce0e3d1",
+    "content-hash": "f87156f911e71379095c229937eadd33",
     "packages": [],
     "packages-dev": [
         {
@@ -172,6 +172,62 @@
                 }
             ],
             "time": "2022-12-30T00:15:36+00:00"
+        },
+        {
+            "name": "felixarntz/terminal-image",
+            "version": "1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/felixarntz/terminal-image.git",
+                "reference": "e25b45fb45f98416d867f2b2840d75bf6e4cdf94"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/felixarntz/terminal-image/zipball/e25b45fb45f98416d867f2b2840d75bf6e4cdf94",
+                "reference": "e25b45fb45f98416d867f2b2840d75bf6e4cdf94",
+                "shasum": ""
+            },
+            "require": {
+                "ext-gd": "*",
+                "php": ">=7.4"
+            },
+            "require-dev": {
+                "dealerdirect/phpcodesniffer-composer-installer": "^1.0",
+                "phpcompatibility/php-compatibility": "dev-develop",
+                "phpstan/phpstan": "~2.1",
+                "phpunit/phpunit": "^9.5",
+                "slevomat/coding-standard": "^8.20",
+                "squizlabs/php_codesniffer": "^3.7 || ^4.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "FelixArntz\\TerminalImage\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Felix Arntz",
+                    "homepage": "https://felix-arntz.me"
+                }
+            ],
+            "description": "A PHP port of the popular JavaScript library of the same name, enabling the display of images directly in the terminal.",
+            "homepage": "https://github.com/felixarntz/terminal-image",
+            "keywords": [
+                "ansi",
+                "image",
+                "php",
+                "terminal"
+            ],
+            "support": {
+                "issues": "https://github.com/felixarntz/terminal-image/issues",
+                "source": "https://github.com/felixarntz/terminal-image"
+            },
+            "time": "2026-03-23T02:10:10+00:00"
         },
         {
             "name": "guzzlehttp/guzzle",
