@@ -41,6 +41,30 @@ The AI Gateway gives you access to more than 100 models from over 20 providers, 
 
 You can access all of these and many more directly through the AI Gateway, drastically simplifying your setup. For a full list of models, [browse the official AI Gateway models list](https://vercel.com/ai-gateway/models).
 
+= Usage =
+
+Once you install the Vercel AI Gateway Provider plugin on your WordPress site, any AI feature that uses the WordPress built-in AI client can use it, typically through other plugins.
+
+If you want to write your own plugin that uses it, you can do so through the WordPress built-in AI client as well. Here's a code example:
+
+`
+$result = wp_ai_client_prompt( 'Hello, world!' )
+    ->using_provider( 'ai_gateway' )
+    ->generate_text_result();
+`
+
+Note however, that the usage of `using_provider` will make the prompt only work if the individual WordPress site has the Vercel AI Gateway Provider plugin active and configured. You should therefore only use it if you want to enforce usage of the AI Gateway.
+
+Otherwise, for broader ecosystem compatibility, it is recommended that you don't specify a provider. You can optionally specify model preferences, for example like this:
+
+`
+$result = wp_ai_client_prompt( 'Hello, world!' )
+    ->using_model_preference( 'claude-sonnet-4.6', 'gemini-3.1-pro-preview', 'gpt-5.4' )
+    ->generate_text_result();
+`
+
+In this case, the first relevant model encountered on the site will be used, and if the site has the Vercel AI Gateway Provider plugin active and configured, it will rely on the AI Gateway.
+
 = External Services =
 
 This plugin connects to the AI Gateway API for inference.
