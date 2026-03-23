@@ -67,6 +67,16 @@ See the [Vercel AI Product Terms](https://vercel.com/legal/ai-product-terms) and
 
 [Get an AI Gateway API key here.](https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai%2Fapi-keys&title=Get%20AI%20Gateway%20API%20key%20for%20your%20WordPress%20site)
 
+= Where should I submit my support request? =
+
+For regular support requests, please use the [wordpress.org support forums](https://wordpress.org/support/plugin/vercel-ai-gateway-provider). If you have a technical issue with the plugin where you already have more insight on how to fix it, you can also [open an issue on GitHub instead](https://github.com/vercel-labs/ai-gateway-provider-php/issues).
+
+= How can I contribute to the plugin? =
+
+If you have ideas to improve the plugin or to solve a bug, feel free to raise an issue or submit a pull request in the [GitHub repository for the plugin](https://github.com/vercel-labs/ai-gateway-provider-php).
+
+You can also contribute to the plugin by translating it. Simply visit [translate.wordpress.org](https://translate.wordpress.org/projects/wp-plugins/vercel-ai-gateway-provider) to get started.
+
 == Changelog ==
 
 = 1.0.0 =

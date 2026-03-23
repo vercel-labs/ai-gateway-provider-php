@@ -1,1 +1,5 @@
 blank_issues_enabled: false
+contact_links:
+  - name: WordPress Support Request
+    url: https://wordpress.org/support/plugin/vercel-ai-gateway-provider/
+    about: Ask for help in the Vercel AI Gateway Provider WordPress plugin support forum.
