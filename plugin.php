@@ -2,7 +2,7 @@
 
 /**
  * Plugin Name: Vercel AI Gateway Provider
- * Plugin URI: https://vercel.com/docs/ai-gateway
+ * Plugin URI: https://github.com/vercel-labs/ai-gateway-provider-php
  * Description: Vercel AI Gateway provider for the PHP AI Client SDK. Works as a Composer package and WordPress plugin.
  * Requires at least: 7.0
  * Requires PHP: 7.4
