@@ -1,4 +1,4 @@
-=== AI Gateway Provider ===
+=== Vercel AI Gateway Provider ===
 
 Contributors: vercellabs, flixos90
 Tested up to: 7.0
@@ -52,13 +52,13 @@ See the [Vercel AI Product Terms](https://vercel.com/legal/ai-product-terms) and
 = Installation from within WordPress =
 
 1. Visit **Plugins > Add New**.
-2. Search for **AI Gateway**, then install and activate the AI Gateway Provider plugin.
+2. Search for **Vercel AI Gateway**, then install and activate the AI Gateway Provider plugin.
 3. Visit **Settings > Connectors** and paste your AI Gateway API key.
 
 = Manual installation =
 
-1. Upload the entire `ai-gateway-provider` folder to the `/wp-content/plugins/` directory.
-2. Visit **Plugins**, and activate the AI Gateway Provider plugin.
+1. Upload the entire `vercel-ai-gateway-provider` folder to the `/wp-content/plugins/` directory.
+2. Visit **Plugins**, and activate the Vercel AI Gateway Provider plugin.
 3. Visit **Settings > Connectors** and paste your AI Gateway API key.
 
 == Frequently Asked Questions ==
