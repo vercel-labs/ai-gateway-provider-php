@@ -19,13 +19,17 @@ $readme = file_get_contents($rootDir . '/readme.txt');
 preg_match('/^Stable tag:\s*(.+)$/m', $readme, $matches);
 $readmeVersion = trim($matches[1] ?? '');
 
+$composerJson = json_decode(file_get_contents($rootDir . '/composer.json'), true);
+$composerVersion = $composerJson['version'] ?? '';
+
 $providerFile = file_get_contents($rootDir . '/src/Provider/AiGatewayProvider.php');
 preg_match("/const\s+VERSION\s*=\s*'([^']+)'/", $providerFile, $matches);
 $constantVersion = $matches[1] ?? '';
 
 $versions = [
-    'plugin.php (Version header)'            => $pluginVersion,
-    'readme.txt (Stable tag)'                => $readmeVersion,
+    'composer.json (version)'                  => $composerVersion,
+    'plugin.php (Version header)'              => $pluginVersion,
+    'readme.txt (Stable tag)'                  => $readmeVersion,
     'AiGatewayProvider.php (VERSION constant)' => $constantVersion,
 ];
 
