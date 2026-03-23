@@ -1,5 +1,5 @@
 {
-    "name": "vercel/ai-gateway-provider",
+    "name": "vercel-labs/ai-gateway-provider",
     "version": "1.0.0-alpha",
     "description": "Vercel AI Gateway provider for the PHP AI Client SDK. Works as a Composer package and WordPress plugin.",
     "license": "MIT",
