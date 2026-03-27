@@ -117,13 +117,13 @@ class AiGatewayProvider extends AbstractApiProvider
 
         return new ProviderMetadata(
             'ai_gateway',
-            'AI Gateway',
+            'Vercel AI Gateway',
             ProviderTypeEnum::cloud(),
             // phpcs:ignore Generic.Files.LineLength
             'https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai%2Fapi-keys&title=Get%20AI%20Gateway%20API%20key%20for%20your%20WordPress%20site',
             RequestAuthenticationMethod::apiKey(),
             $description,
-            dirname(__DIR__, 2) . '/assets/vercel-logo.png'
+            dirname(__DIR__, 2) . '/assets/vercel-logo.svg'
         );
     }
 
