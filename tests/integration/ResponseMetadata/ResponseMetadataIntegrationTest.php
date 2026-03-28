@@ -8,6 +8,7 @@ use PHPUnit\Framework\TestCase;
 use Vercel\AiGatewayProvider\Provider\AiGatewayProvider;
 use Vercel\AiGatewayProvider\Tests\Traits\IntegrationTestTrait;
 use WordPress\AiClient\AiClient;
+use WordPress\AiClient\Results\Enums\FinishReasonEnum;
 
 /**
  * @group integration
@@ -74,5 +75,27 @@ class ResponseMetadataIntegrationTest extends TestCase
         $this->assertIsArray($providerMetadata['gateway']);
         $this->assertArrayHasKey('openai', $providerMetadata);
         $this->assertIsArray($providerMetadata['openai']);
+    }
+
+    public function testTextGenerationResultHasStopFinishReason(): void
+    {
+        $result = AiClient::prompt('Say "hello".')
+            ->usingModel(AiGatewayProvider::model('claude-haiku-4.5'))
+            ->generateTextResult();
+
+        $candidates = $result->getCandidates();
+        $this->assertCount(1, $candidates);
+        $this->assertTrue($candidates[0]->getFinishReason()->isStop());
+    }
+
+    public function testImageGenerationResultHasStopFinishReason(): void
+    {
+        $result = AiClient::prompt('A red circle on a white background.')
+            ->usingModel(AiGatewayProvider::model('gpt-image-1'))
+            ->generateImageResult();
+
+        $candidates = $result->getCandidates();
+        $this->assertCount(1, $candidates);
+        $this->assertTrue($candidates[0]->getFinishReason()->isStop());
     }
 }
