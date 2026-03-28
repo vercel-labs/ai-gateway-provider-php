@@ -110,9 +110,9 @@ class AiGatewayProvider extends AbstractApiProvider
     {
         if (function_exists('__')) {
             /** @var string $description */
-            $description = __('Generate and edit text, images, and more with over 100 AI models from over 20 providers.', 'vercel-ai-gateway-provider'); // phpcs:ignore Generic.Files.LineLength
+            $description = __('Access hundreds of text, image, and video AI models through 1 API key. Get unified billing, observability, and no markup from list price.', 'vercel-ai-gateway-provider'); // phpcs:ignore Generic.Files.LineLength
         } else {
-            $description = 'Generate and edit text, images, and more with over 100 AI models from over 20 providers.';
+            $description = 'Access hundreds of text, image, and video AI models through 1 API key. Get unified billing, observability, and no markup from list price.'; // phpcs:ignore Generic.Files.LineLength
         }
 
         return new ProviderMetadata(
