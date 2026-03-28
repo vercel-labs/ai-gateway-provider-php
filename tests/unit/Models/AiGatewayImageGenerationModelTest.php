@@ -163,6 +163,45 @@ class AiGatewayImageGenerationModelTest extends TestCase
         $this->assertSame('', $result->getId());
     }
 
+    public function testAdditionalDataCapturesUnknownKeys(): void
+    {
+        $response = new Response(
+            200,
+            ['Content-Type' => 'application/json'],
+            json_encode([
+                'images' => [base64_encode('fake-image-data')],
+                'usage' => ['inputTokens' => 10, 'outputTokens' => 20, 'totalTokens' => 30],
+                'providerMetadata' => [
+                    'gateway' => ['generationId' => 'resp-img'],
+                ],
+                'extraField' => 'extraValue',
+                'anotherField' => ['nested' => true],
+            ])
+        );
+        $transporter = new MockHttpTransporter($response);
+        $model = $this->createModel($transporter);
+
+        $result = $model->generateImageResult($this->createSimplePrompt());
+
+        $additionalData = $result->getAdditionalData();
+        $this->assertArrayHasKey('extraField', $additionalData);
+        $this->assertSame('extraValue', $additionalData['extraField']);
+        $this->assertArrayHasKey('anotherField', $additionalData);
+        $this->assertArrayHasKey('providerMetadata', $additionalData);
+        $this->assertArrayNotHasKey('images', $additionalData);
+        $this->assertArrayNotHasKey('usage', $additionalData);
+    }
+
+    public function testAdditionalDataEmptyWhenNoExtraKeys(): void
+    {
+        $transporter = new MockHttpTransporter($this->createMockResponse());
+        $model = $this->createModel($transporter);
+
+        $result = $model->generateImageResult($this->createSimplePrompt());
+
+        $this->assertEmpty($result->getAdditionalData());
+    }
+
     public function testMultipleImageResponseParsing(): void
     {
         $response = new Response(

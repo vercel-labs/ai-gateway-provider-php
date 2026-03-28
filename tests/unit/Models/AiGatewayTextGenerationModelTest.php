@@ -468,6 +468,49 @@ class AiGatewayTextGenerationModelTest extends TestCase
         $this->assertSame('', $result->getId());
     }
 
+    public function testAdditionalDataCapturesUnknownKeys(): void
+    {
+        $response = new Response(
+            200,
+            ['Content-Type' => 'application/json'],
+            json_encode([
+                'content' => [
+                    ['type' => 'text', 'text' => 'Hello!'],
+                ],
+                'finishReason' => ['unified' => 'stop'],
+                'usage' => ['promptTokens' => 5, 'completionTokens' => 3],
+                'providerMetadata' => [
+                    'gateway' => ['generationId' => 'resp-abc'],
+                ],
+                'extraField' => 'extraValue',
+                'anotherField' => ['nested' => true],
+            ])
+        );
+        $transporter = new MockHttpTransporter($response);
+        $model = $this->createModel($transporter);
+
+        $result = $model->generateTextResult($this->createSimplePrompt());
+
+        $additionalData = $result->getAdditionalData();
+        $this->assertArrayHasKey('extraField', $additionalData);
+        $this->assertSame('extraValue', $additionalData['extraField']);
+        $this->assertArrayHasKey('anotherField', $additionalData);
+        $this->assertArrayHasKey('providerMetadata', $additionalData);
+        $this->assertArrayNotHasKey('content', $additionalData);
+        $this->assertArrayNotHasKey('usage', $additionalData);
+        $this->assertArrayNotHasKey('finishReason', $additionalData);
+    }
+
+    public function testAdditionalDataEmptyWhenNoExtraKeys(): void
+    {
+        $transporter = new MockHttpTransporter($this->createMockResponse());
+        $model = $this->createModel($transporter);
+
+        $result = $model->generateTextResult($this->createSimplePrompt());
+
+        $this->assertEmpty($result->getAdditionalData());
+    }
+
     public function testParseResponseWithToolCallContent(): void
     {
         $response = new Response(

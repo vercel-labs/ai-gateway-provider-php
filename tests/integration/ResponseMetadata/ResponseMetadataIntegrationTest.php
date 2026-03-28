@@ -27,7 +27,7 @@ class ResponseMetadataIntegrationTest extends TestCase
     public function testTextGenerationResultHasResponseId(): void
     {
         $result = AiClient::prompt('Say "hello".')
-            ->usingModel(AiGatewayProvider::model('gemini-3.1-flash-lite-preview'))
+            ->usingModel(AiGatewayProvider::model('claude-haiku-4.5'))
             ->generateTextResult();
 
         $this->assertNotEmpty($result->getId(), 'Text generation result should have a non-empty response ID.');
@@ -40,5 +40,39 @@ class ResponseMetadataIntegrationTest extends TestCase
             ->generateImageResult();
 
         $this->assertNotEmpty($result->getId(), 'Image generation result should have a non-empty response ID.');
+    }
+
+    public function testTextGenerationResultHasProviderMetadataInAdditionalData(): void
+    {
+        $result = AiClient::prompt('Say "hello".')
+            ->usingModel(AiGatewayProvider::model('claude-haiku-4.5'))
+            ->generateTextResult();
+
+        $additionalData = $result->getAdditionalData();
+        $this->assertNotEmpty($additionalData, 'Additional data should not be empty.');
+        $this->assertIsArray($additionalData['providerMetadata'] ?? null);
+
+        $providerMetadata = $additionalData['providerMetadata'];
+        $this->assertArrayHasKey('gateway', $providerMetadata);
+        $this->assertIsArray($providerMetadata['gateway']);
+        $this->assertArrayHasKey('anthropic', $providerMetadata);
+        $this->assertIsArray($providerMetadata['anthropic']);
+    }
+
+    public function testImageGenerationResultHasProviderMetadataInAdditionalData(): void
+    {
+        $result = AiClient::prompt('A red circle on a white background.')
+            ->usingModel(AiGatewayProvider::model('gpt-image-1'))
+            ->generateImageResult();
+
+        $additionalData = $result->getAdditionalData();
+        $this->assertNotEmpty($additionalData, 'Additional data should not be empty.');
+        $this->assertIsArray($additionalData['providerMetadata'] ?? null);
+
+        $providerMetadata = $additionalData['providerMetadata'];
+        $this->assertArrayHasKey('gateway', $providerMetadata);
+        $this->assertIsArray($providerMetadata['gateway']);
+        $this->assertArrayHasKey('openai', $providerMetadata);
+        $this->assertIsArray($providerMetadata['openai']);
     }
 }

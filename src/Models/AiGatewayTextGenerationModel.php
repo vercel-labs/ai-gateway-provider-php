@@ -468,12 +468,20 @@ class AiGatewayTextGenerationModel extends AbstractApiBasedModel implements Text
         $message = new Message(MessageRoleEnum::model(), $parts);
         $candidate = new Candidate($message, $finishReason);
 
+        $additionalData = $responseData;
+        unset(
+            $additionalData['content'],
+            $additionalData['usage'],
+            $additionalData['finishReason']
+        );
+
         return new GenerativeAiResult(
             $id,
             [$candidate],
             $tokenUsage,
             $this->providerMetadata(),
-            $this->metadata()
+            $this->metadata(),
+            $additionalData
         );
     }
 

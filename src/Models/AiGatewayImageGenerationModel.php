@@ -221,12 +221,19 @@ class AiGatewayImageGenerationModel extends AbstractApiBasedModel implements Ima
 
         $tokenUsage = $this->parseTokenUsage($data);
 
+        $additionalData = $responseData;
+        unset(
+            $additionalData['images'],
+            $additionalData['usage']
+        );
+
         return new GenerativeAiResult(
             $id,
             $candidates,
             $tokenUsage,
             $this->providerMetadata(),
-            $this->metadata()
+            $this->metadata(),
+            $additionalData
         );
     }
 
