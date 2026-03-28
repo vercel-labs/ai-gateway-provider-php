@@ -40,7 +40,7 @@ class TextGenerationIntegrationTest extends TestCase
         return [
             'Anthropic' => ['claude-haiku-4.5'],
             'Google'    => ['gemini-3.1-flash-lite-preview'],
-            'OpenAI'    => ['gpt-5-mini'],
+            'OpenAI'    => ['gpt-5.4-mini'],
             'xAI'       => ['grok-4.1-fast-non-reasoning'],
         ];
     }
