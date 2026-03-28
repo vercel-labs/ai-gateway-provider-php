@@ -79,10 +79,9 @@ class TextAndImageGenerationIntegrationTest extends TestCase
         $this->assertCount(1, $candidates);
 
         $parts = $candidates[0]->getMessage()->getParts();
-        $this->assertNotEmpty($parts);
+        $this->assertNotEmpty($parts); // May include reasoning parts.
 
-        $file = $parts[0]->getFile();
-        $this->assertNotNull($file);
+        $file = $result->toFile();
         $this->assertStringStartsWith('image/', $file->getMimeType());
 
         $this->saveGeneratedFile($file, "image-only-{$modelId}");
@@ -105,10 +104,9 @@ class TextAndImageGenerationIntegrationTest extends TestCase
         $this->assertCount(1, $candidates);
 
         $parts = $candidates[0]->getMessage()->getParts();
-        $this->assertNotEmpty($parts);
+        $this->assertNotEmpty($parts); // May include reasoning parts.
 
-        $file = $parts[0]->getFile();
-        $this->assertNotNull($file);
+        $file = $result->toFile();
         $this->assertStringStartsWith('image/', $file->getMimeType());
 
         $this->saveGeneratedFile($file, "image-only-options-{$modelId}");
@@ -170,14 +168,7 @@ class TextAndImageGenerationIntegrationTest extends TestCase
 
         $turn1Response = $turn1Result->toMessage();
 
-        $turn1File = null;
-        foreach ($turn1Response->getParts() as $part) {
-            if ($part->getFile() !== null) {
-                $turn1File = $part->getFile();
-                break;
-            }
-        }
-        $this->assertNotNull($turn1File, 'First turn should contain an image.');
+        $turn1File = $turn1Result->toFile();
         $this->assertStringStartsWith('image/', $turn1File->getMimeType());
         $this->saveGeneratedFile($turn1File, "multi-turn-1-{$modelId}");
 
@@ -188,14 +179,7 @@ class TextAndImageGenerationIntegrationTest extends TestCase
             ->asOutputModalities(ModalityEnum::text(), ModalityEnum::image())
             ->generateTextResult();
 
-        $turn2File = null;
-        foreach ($turn2Result->getCandidates()[0]->getMessage()->getParts() as $part) {
-            if ($part->getFile() !== null) {
-                $turn2File = $part->getFile();
-                break;
-            }
-        }
-        $this->assertNotNull($turn2File, 'Second turn should contain an image.');
+        $turn2File = $turn2Result->toFile();
         $this->assertStringStartsWith('image/', $turn2File->getMimeType());
         $this->saveGeneratedFile($turn2File, "multi-turn-2-{$modelId}");
 
