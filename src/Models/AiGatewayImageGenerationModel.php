@@ -24,6 +24,7 @@ use WordPress\AiClient\Providers\DTO\ProviderMetadata;
 use WordPress\AiClient\Providers\Http\Contracts\RequestAuthenticationInterface;
 use WordPress\AiClient\Providers\Http\DTO\ApiKeyRequestAuthentication;
 use WordPress\AiClient\Providers\Http\DTO\Request;
+use WordPress\AiClient\Providers\Http\DTO\Response;
 use WordPress\AiClient\Providers\Http\Enums\HttpMethodEnum;
 use WordPress\AiClient\Providers\Http\Exception\ResponseException;
 use WordPress\AiClient\Providers\Http\Util\ResponseUtil;
@@ -41,15 +42,14 @@ use WordPress\AiClient\Results\Enums\FinishReasonEnum;
  *
  * @phpstan-type ResponseData array{
  *     images?: list<string>,
- *     usage?: array{inputTokens?: int, outputTokens?: int, totalTokens?: int}
+ *     usage?: array{inputTokens?: int, outputTokens?: int, totalTokens?: int},
+ *     providerMetadata?: array<string, array<string, mixed>>
  * }
  */
 class AiGatewayImageGenerationModel extends AbstractApiBasedModel implements ImageGenerationModelInterface
 {
     use WithAspectRatioTrait;
     use WithProviderOptionsTrait;
-
-    private const API_NAME = 'AI Gateway';
 
     /** @var list<string> */
     private const KNOWN_TOP_LEVEL_OPTIONS = ['seed'];
@@ -145,14 +145,7 @@ class AiGatewayImageGenerationModel extends AbstractApiBasedModel implements Ima
         $response = $this->getHttpTransporter()->send($request);
         ResponseUtil::throwIfNotSuccessful($response);
 
-        /** @var ResponseData|null $data */
-        $data = $response->getData();
-        if ($data === null) {
-            // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-            throw ResponseException::fromMissingData(self::API_NAME, 'response body');
-        }
-
-        return $this->parseResponse($data);
+        return $this->parseResponseToGenerativeAiResult($response);
     }
 
     /**
@@ -197,17 +190,26 @@ class AiGatewayImageGenerationModel extends AbstractApiBasedModel implements Ima
      *
      * @since 1.0.0
      *
-     * @param ResponseData $data The response data.
+     * @param Response $response The HTTP response.
      * @return GenerativeAiResult The parsed result.
      *
      * @throws ResponseException If the response data is invalid.
      */
-    private function parseResponse(array $data): GenerativeAiResult
+    private function parseResponseToGenerativeAiResult(Response $response): GenerativeAiResult
     {
-        if (!isset($data['images']) || !is_array($data['images'])) {
+        /** @var ResponseData $responseData */
+        $responseData = $response->getData();
+        if (!isset($responseData['images']) || !$responseData['images']) {
             // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-            throw ResponseException::fromMissingData(self::API_NAME, 'images');
+            throw ResponseException::fromMissingData($this->providerMetadata()->getName(), 'images');
         }
+
+        $id = isset($responseData['providerMetadata']['gateway']['generationId'])
+            && is_string($responseData['providerMetadata']['gateway']['generationId'])
+            ? $responseData['providerMetadata']['gateway']['generationId']
+            : '';
+
+        $data = $responseData;
 
         $candidates = [];
         foreach ($data['images'] as $imageBase64) {
@@ -220,7 +222,7 @@ class AiGatewayImageGenerationModel extends AbstractApiBasedModel implements Ima
         $tokenUsage = $this->parseTokenUsage($data);
 
         return new GenerativeAiResult(
-            '',
+            $id,
             $candidates,
             $tokenUsage,
             $this->providerMetadata(),

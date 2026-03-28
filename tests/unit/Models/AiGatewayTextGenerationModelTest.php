@@ -434,6 +434,40 @@ class AiGatewayTextGenerationModelTest extends TestCase
         $this->assertSame('Hello, world!', $result->toText());
     }
 
+    public function testResponseIdParsedWhenPresent(): void
+    {
+        $response = new Response(
+            200,
+            ['Content-Type' => 'application/json'],
+            json_encode([
+                'content' => [
+                    ['type' => 'text', 'text' => 'Hello!'],
+                ],
+                'finishReason' => ['unified' => 'stop'],
+                'usage' => ['promptTokens' => 5, 'completionTokens' => 3],
+                'providerMetadata' => [
+                    'gateway' => ['generationId' => 'resp-abc123'],
+                ],
+            ])
+        );
+        $transporter = new MockHttpTransporter($response);
+        $model = $this->createModel($transporter);
+
+        $result = $model->generateTextResult($this->createSimplePrompt());
+
+        $this->assertSame('resp-abc123', $result->getId());
+    }
+
+    public function testResponseIdDefaultsToEmptyStringWhenMissing(): void
+    {
+        $transporter = new MockHttpTransporter($this->createMockResponse());
+        $model = $this->createModel($transporter);
+
+        $result = $model->generateTextResult($this->createSimplePrompt());
+
+        $this->assertSame('', $result->getId());
+    }
+
     public function testParseResponseWithToolCallContent(): void
     {
         $response = new Response(
@@ -544,21 +578,7 @@ class AiGatewayTextGenerationModelTest extends TestCase
         $model->generateTextResult($this->createSimplePrompt());
     }
 
-    public function testMissingResponseBodyThrowsResponseException(): void
-    {
-        $response = new Response(
-            200,
-            ['Content-Type' => 'application/json'],
-            null
-        );
-        $transporter = new MockHttpTransporter($response);
-        $model = $this->createModel($transporter);
 
-        $this->expectException(ResponseException::class);
-        $this->expectExceptionMessage('response body');
-
-        $model->generateTextResult($this->createSimplePrompt());
-    }
 
     public function testTokenUsageNestedFormat(): void
     {

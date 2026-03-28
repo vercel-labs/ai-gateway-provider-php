@@ -25,6 +25,7 @@ use WordPress\AiClient\Providers\DTO\ProviderMetadata;
 use WordPress\AiClient\Providers\Http\Contracts\RequestAuthenticationInterface;
 use WordPress\AiClient\Providers\Http\DTO\ApiKeyRequestAuthentication;
 use WordPress\AiClient\Providers\Http\DTO\Request;
+use WordPress\AiClient\Providers\Http\DTO\Response;
 use WordPress\AiClient\Providers\Http\Enums\HttpMethodEnum;
 use WordPress\AiClient\Providers\Http\Exception\ResponseException;
 use WordPress\AiClient\Providers\Http\Util\ResponseUtil;
@@ -55,15 +56,14 @@ use WordPress\AiClient\Tools\DTO\FunctionDeclaration;
  * @phpstan-type ResponseData array{
  *     content?: ResponseContentPart|list<ResponseContentPart>,
  *     usage?: array<string, mixed>,
- *     finishReason?: array{unified: string, raw?: string}
+ *     finishReason?: array{unified: string, raw?: string},
+ *     providerMetadata?: array<string, array<string, mixed>>
  * }
  */
 class AiGatewayTextGenerationModel extends AbstractApiBasedModel implements TextGenerationModelInterface
 {
     use WithAspectRatioTrait;
     use WithProviderOptionsTrait;
-
-    private const API_NAME = 'AI Gateway';
 
     private const FINISH_REASON_MAP = [
         'stop' => FinishReasonEnum::STOP,
@@ -165,14 +165,7 @@ class AiGatewayTextGenerationModel extends AbstractApiBasedModel implements Text
         $response = $this->getHttpTransporter()->send($request);
         ResponseUtil::throwIfNotSuccessful($response);
 
-        /** @var ResponseData|null $data */
-        $data = $response->getData();
-        if ($data === null) {
-            // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-            throw ResponseException::fromMissingData(self::API_NAME, 'response body');
-        }
-
-        return $this->parseResponse($data);
+        return $this->parseResponseToGenerativeAiResult($response);
     }
 
     /**
@@ -453,22 +446,30 @@ class AiGatewayTextGenerationModel extends AbstractApiBasedModel implements Text
      *
      * @since 1.0.0
      *
-     * @param ResponseData $data The response data.
+     * @param Response $response The HTTP response.
      * @return GenerativeAiResult The parsed result.
      *
      * @throws ResponseException If the response data is invalid.
      */
-    private function parseResponse(array $data): GenerativeAiResult
+    private function parseResponseToGenerativeAiResult(Response $response): GenerativeAiResult
     {
-        $parts = $this->parseContentParts($data);
-        $finishReason = $this->parseFinishReason($data);
-        $tokenUsage = $this->parseTokenUsage($data);
+        /** @var ResponseData $responseData */
+        $responseData = $response->getData();
+
+        $id = isset($responseData['providerMetadata']['gateway']['generationId'])
+            && is_string($responseData['providerMetadata']['gateway']['generationId'])
+            ? $responseData['providerMetadata']['gateway']['generationId']
+            : '';
+
+        $parts = $this->parseContentParts($responseData);
+        $finishReason = $this->parseFinishReason($responseData);
+        $tokenUsage = $this->parseTokenUsage($responseData);
 
         $message = new Message(MessageRoleEnum::model(), $parts);
         $candidate = new Candidate($message, $finishReason);
 
         return new GenerativeAiResult(
-            '',
+            $id,
             [$candidate],
             $tokenUsage,
             $this->providerMetadata(),
@@ -488,9 +489,9 @@ class AiGatewayTextGenerationModel extends AbstractApiBasedModel implements Text
      */
     private function parseContentParts(array $data): array
     {
-        if (!isset($data['content'])) {
+        if (!isset($data['content']) || !$data['content']) {
             // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-            throw ResponseException::fromMissingData(self::API_NAME, 'content');
+            throw ResponseException::fromMissingData($this->providerMetadata()->getName(), 'content');
         }
 
         $content = $data['content'];
@@ -544,7 +545,7 @@ class AiGatewayTextGenerationModel extends AbstractApiBasedModel implements Text
         if (count($parts) === 0) {
             throw ResponseException::fromInvalidData(
                 // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-                self::API_NAME,
+                $this->providerMetadata()->getName(),
                 'content',
                 'No supported content found in response.'
             );
@@ -662,7 +663,7 @@ class AiGatewayTextGenerationModel extends AbstractApiBasedModel implements Text
     {
         if (!isset($data['finishReason'])) {
             // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-            throw ResponseException::fromMissingData(self::API_NAME, 'finishReason');
+            throw ResponseException::fromMissingData($this->providerMetadata()->getName(), 'finishReason');
         }
 
         $finishReason = $data['finishReason'];
@@ -671,7 +672,7 @@ class AiGatewayTextGenerationModel extends AbstractApiBasedModel implements Text
         if ($reason === null || !isset(self::FINISH_REASON_MAP[$reason])) {
             throw ResponseException::fromInvalidData(
                 // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-                self::API_NAME,
+                $this->providerMetadata()->getName(),
                 'finishReason',
                 // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
                 sprintf('Unknown finish reason "%s".', is_string($reason) ? $reason : json_encode($finishReason))

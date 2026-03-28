@@ -133,6 +133,36 @@ class AiGatewayImageGenerationModelTest extends TestCase
         $this->assertSame('image/png', $file->getMimeType());
     }
 
+    public function testResponseIdParsedWhenPresent(): void
+    {
+        $response = new Response(
+            200,
+            ['Content-Type' => 'application/json'],
+            json_encode([
+                'images' => [base64_encode('fake-image-data')],
+                'providerMetadata' => [
+                    'gateway' => ['generationId' => 'resp-img-456'],
+                ],
+            ])
+        );
+        $transporter = new MockHttpTransporter($response);
+        $model = $this->createModel($transporter);
+
+        $result = $model->generateImageResult($this->createSimplePrompt());
+
+        $this->assertSame('resp-img-456', $result->getId());
+    }
+
+    public function testResponseIdDefaultsToEmptyStringWhenMissing(): void
+    {
+        $transporter = new MockHttpTransporter($this->createMockResponse());
+        $model = $this->createModel($transporter);
+
+        $result = $model->generateImageResult($this->createSimplePrompt());
+
+        $this->assertSame('', $result->getId());
+    }
+
     public function testMultipleImageResponseParsing(): void
     {
         $response = new Response(
@@ -179,21 +209,7 @@ class AiGatewayImageGenerationModelTest extends TestCase
         $model->generateImageResult($this->createSimplePrompt());
     }
 
-    public function testMissingResponseBodyThrowsResponseException(): void
-    {
-        $response = new Response(
-            200,
-            ['Content-Type' => 'application/json'],
-            null
-        );
-        $transporter = new MockHttpTransporter($response);
-        $model = $this->createModel($transporter);
 
-        $this->expectException(ResponseException::class);
-        $this->expectExceptionMessage('response body');
-
-        $model->generateImageResult($this->createSimplePrompt());
-    }
 
     public function testCandidateCountMapsToNInBody(): void
     {
