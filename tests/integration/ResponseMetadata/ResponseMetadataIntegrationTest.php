@@ -8,7 +8,6 @@ use PHPUnit\Framework\TestCase;
 use Vercel\AiGatewayProvider\Provider\AiGatewayProvider;
 use Vercel\AiGatewayProvider\Tests\Traits\IntegrationTestTrait;
 use WordPress\AiClient\AiClient;
-use WordPress\AiClient\Results\Enums\FinishReasonEnum;
 
 /**
  * @group integration
@@ -25,33 +24,23 @@ class ResponseMetadataIntegrationTest extends TestCase
         $this->requireApiKey('AI_GATEWAY_API_KEY');
     }
 
-    public function testTextGenerationResultHasResponseId(): void
+    public function testTextGenerationResponseMetadata(): void
     {
         $result = AiClient::prompt('Say "hello".')
             ->usingModel(AiGatewayProvider::model('claude-haiku-4.5'))
             ->generateTextResult();
 
         $this->assertNotEmpty($result->getId(), 'Text generation result should have a non-empty response ID.');
-    }
 
-    public function testImageGenerationResultHasResponseId(): void
-    {
-        $result = AiClient::prompt('A red circle on a white background.')
-            ->usingModel(AiGatewayProvider::model('gpt-image-1'))
-            ->generateImageResult();
-
-        $this->assertNotEmpty($result->getId(), 'Image generation result should have a non-empty response ID.');
-    }
-
-    public function testTextGenerationResultHasProviderMetadataInAdditionalData(): void
-    {
-        $result = AiClient::prompt('Say "hello".')
-            ->usingModel(AiGatewayProvider::model('claude-haiku-4.5'))
-            ->generateTextResult();
+        $candidates = $result->getCandidates();
+        $this->assertCount(1, $candidates);
+        $this->assertTrue($candidates[0]->getFinishReason()->isStop());
 
         $additionalData = $result->getAdditionalData();
         $this->assertNotEmpty($additionalData, 'Additional data should not be empty.');
-        $this->assertIsArray($additionalData['providerMetadata'] ?? null);
+        $this->assertIsArray($additionalData);
+        $this->assertArrayHasKey('providerMetadata', $additionalData);
+        $this->assertIsArray($additionalData['providerMetadata']);
 
         $providerMetadata = $additionalData['providerMetadata'];
         $this->assertArrayHasKey('gateway', $providerMetadata);
@@ -60,42 +49,28 @@ class ResponseMetadataIntegrationTest extends TestCase
         $this->assertIsArray($providerMetadata['anthropic']);
     }
 
-    public function testImageGenerationResultHasProviderMetadataInAdditionalData(): void
+    public function testImageGenerationResponseMetadata(): void
     {
         $result = AiClient::prompt('A red circle on a white background.')
             ->usingModel(AiGatewayProvider::model('gpt-image-1'))
             ->generateImageResult();
 
+        $this->assertNotEmpty($result->getId(), 'Image generation result should have a non-empty response ID.');
+
+        $candidates = $result->getCandidates();
+        $this->assertCount(1, $candidates);
+        $this->assertTrue($candidates[0]->getFinishReason()->isStop());
+
         $additionalData = $result->getAdditionalData();
         $this->assertNotEmpty($additionalData, 'Additional data should not be empty.');
-        $this->assertIsArray($additionalData['providerMetadata'] ?? null);
+        $this->assertIsArray($additionalData);
+        $this->assertArrayHasKey('providerMetadata', $additionalData);
+        $this->assertIsArray($additionalData['providerMetadata']);
 
         $providerMetadata = $additionalData['providerMetadata'];
         $this->assertArrayHasKey('gateway', $providerMetadata);
         $this->assertIsArray($providerMetadata['gateway']);
         $this->assertArrayHasKey('openai', $providerMetadata);
         $this->assertIsArray($providerMetadata['openai']);
-    }
-
-    public function testTextGenerationResultHasStopFinishReason(): void
-    {
-        $result = AiClient::prompt('Say "hello".')
-            ->usingModel(AiGatewayProvider::model('claude-haiku-4.5'))
-            ->generateTextResult();
-
-        $candidates = $result->getCandidates();
-        $this->assertCount(1, $candidates);
-        $this->assertTrue($candidates[0]->getFinishReason()->isStop());
-    }
-
-    public function testImageGenerationResultHasStopFinishReason(): void
-    {
-        $result = AiClient::prompt('A red circle on a white background.')
-            ->usingModel(AiGatewayProvider::model('gpt-image-1'))
-            ->generateImageResult();
-
-        $candidates = $result->getCandidates();
-        $this->assertCount(1, $candidates);
-        $this->assertTrue($candidates[0]->getFinishReason()->isStop());
     }
 }
