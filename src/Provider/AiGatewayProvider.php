@@ -115,6 +115,15 @@ class AiGatewayProvider extends AbstractApiProvider
             $description = 'Access hundreds of text, image, and video AI models through 1 API key. Get unified billing, observability, and no markup from list price.'; // phpcs:ignore Generic.Files.LineLength
         }
 
+        // In case we're in WordPress context and the plugin is symlinked, try the symlinked path.
+        $logoPath = dirname(__DIR__, 2) . '/assets/vercel-logo.png';
+        if (
+            defined('WP_PLUGIN_DIR') &&
+            file_exists(WP_PLUGIN_DIR . '/vercel-ai-gateway-provider/assets/vercel-logo.png')
+        ) {
+            $logoPath = WP_PLUGIN_DIR . '/vercel-ai-gateway-provider/assets/vercel-logo.png';
+        }
+
         return new ProviderMetadata(
             'ai_gateway',
             'Vercel AI Gateway',
@@ -123,7 +132,7 @@ class AiGatewayProvider extends AbstractApiProvider
             'https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai%2Fapi-keys&title=Get%20AI%20Gateway%20API%20key%20for%20your%20WordPress%20site',
             RequestAuthenticationMethod::apiKey(),
             $description,
-            dirname(__DIR__, 2) . '/assets/vercel-logo.svg'
+            $logoPath
         );
     }
 
