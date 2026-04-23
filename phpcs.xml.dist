@@ -7,7 +7,6 @@
     <file>plugin.php</file>
 
     <!-- Ignore 3P directories -->
-    <exclude-pattern>*/opensrc/*</exclude-pattern>
     <exclude-pattern>*/vendor/*</exclude-pattern>
 
     <!-- Show progress, show sniff codes in all reports -->
@@ -24,6 +23,11 @@
 
     <!-- WordPress plugin bootstrap files intentionally have side effects -->
     <rule ref="PSR1.Files.SideEffects.FoundWithSymbols">
+        <exclude-pattern>plugin.php</exclude-pattern>
+    </rule>
+
+    <!-- WordPress plugin header metadata lines can exceed line length limits -->
+    <rule ref="Generic.Files.LineLength.TooLong">
         <exclude-pattern>plugin.php</exclude-pattern>
     </rule>
 

@@ -7,7 +7,7 @@ License:      MIT
 License URI:  https://opensource.org/license/mit
 Tags:         ai, vercel, artificial-intelligence, llm, connector
 
-Vercel AI Gateway provider for the PHP AI Client SDK. Works as a Composer package and WordPress plugin.
+The Vercel AI Gateway connector offers access to hundreds of text, image, and video AI models through 1 API key.
 
 == Description ==
 
@@ -15,11 +15,11 @@ This plugin provides the Vercel AI Gateway integration for the PHP AI Client SDK
 
 = Features =
 
-* Access models from over 20 providers with just a single API key
-* Generate text, images, code, and more, including multi-turn conversations
-* Build agents using tool calls
-* Smart fallbacks, e.g. when an underlying provider is experiencing temporary downtime
-* Comprehensive support for the majority of AI model features included
+* Access hundreds of models from over 20 providers with 1 API key
+* Generate text, images, video, and more, including multi-turn conversations
+* Unified billing and observability across your entire AI stack, with text, image, and video models
+* Automatic fallbacks during provider outages so your app stays up even when a model goes down
+* Pay exactly what providers charge with no platform fees
 
 Available models are dynamically discovered from the AI Gateway API - you get access to new models as soon as they're available.
 
@@ -31,6 +31,7 @@ The AI Gateway gives you access to more than 100 models from over 20 providers, 
 - Anthropic (Claude models)
 - Black Forest Labs (Flux models)
 - Google (Gemini, Imagen, and Veo models)
+- KlingAI (Kling models)
 - MiniMax (MiniMax models)
 - Mistral (Mistral and Devstral models)
 - Moonshot AI (Kimi models)
@@ -59,7 +60,7 @@ Otherwise, for broader ecosystem compatibility, it is recommended that you don't
 
 `
 $result = wp_ai_client_prompt( 'Hello, world!' )
-    ->using_model_preference( 'claude-sonnet-4.6', 'gemini-3.1-pro-preview', 'gpt-5.4' )
+    ->using_model_preference( 'claude-opus-4.7', 'gemini-3.1-pro-preview', 'gpt-5.4' )
     ->generate_text_result();
 `
 
