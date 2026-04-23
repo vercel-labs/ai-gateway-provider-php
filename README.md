@@ -2,6 +2,8 @@
 
 Vercel AI Gateway provider for the [PHP AI Client](https://github.com/WordPress/php-ai-client) SDK. Works as a Composer package and WordPress plugin.
 
+The Vercel AI Gateway allows you to use hundreds of generative AI models from over 20 different providers, to generate text, images, video, and more.
+
 **Related project:** See the [AI SDK WordPress plugin](https://github.com/vercel-labs/ai-sdk-wp) for a WordPress plugin that makes the AI SDK usable in WordPress client-side code. You can combine the two plugins to use the AI Gateway through the AI SDK in WordPress.
 
 ## Installation

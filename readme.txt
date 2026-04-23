@@ -11,7 +11,9 @@ The Vercel AI Gateway connector offers access to hundreds of text, image, and vi
 
 == Description ==
 
-This plugin provides the Vercel AI Gateway integration for the PHP AI Client SDK. It enables WordPress sites to use hundreds of generative AI models from over 20 different providers, including the popular Claude, Gemini, GPT, and Grok models.
+This plugin allows your WordPress site to connect to the Vercel AI Gateway. It enables your WordPress site to use hundreds of generative AI models from over 20 different providers, to generate text, images, video, and more.
+
+The Vercel AI Gateway connector is built on top of WordPress's built-in AI client and integrates seamlessly with its connector API. This way it unlocks using AI powered plugins on your site.
 
 = Features =
 
@@ -104,6 +106,4 @@ You can also contribute to the plugin by translating it. Simply visit [translate
 
 == Changelog ==
 
-= 1.0.0 =
-
-* Initial release
+See the [GitHub releases page](https://github.com/vercel-labs/ai-gateway-provider-php/releases).
