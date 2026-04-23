@@ -3,6 +3,3 @@ tools/output
 vendor
 .env
 *.cache
-
-# opensrc - source code for packages
-opensrc/
