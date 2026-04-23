@@ -1,4 +1,4 @@
-# AI Gateway Provider
+# Vercel AI Gateway Provider
 
 Vercel AI Gateway provider for the [PHP AI Client](https://github.com/WordPress/php-ai-client) SDK. Works as a Composer package and WordPress plugin.
 
