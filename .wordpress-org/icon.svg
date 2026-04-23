@@ -1,0 +1,4 @@
+<svg width="128" height="128" stroke-linejoin="round" viewBox="0 0 16 16">
+    <rect x="0" y="0" width="16" height="16" fill="black"></rect>
+    <path fill-rule="evenodd" clip-rule="evenodd" d="M8 4.5L11.5 10.625H4.5L8 4.5Z" fill="white"></path>
+</svg>
