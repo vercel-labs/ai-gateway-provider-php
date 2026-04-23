@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "f87156f911e71379095c229937eadd33",
+    "content-hash": "ead0a16c43c579098f8449b9c0d59ac8",
     "packages": [],
     "packages-dev": [
         {
@@ -1063,12 +1063,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/PHPCompatibility/PHPCompatibility.git",
-                "reference": "0d13ceeb8092853840cdd40c764ce90f28778630"
+                "reference": "aba7b5d3aec1ea5311e912efece301e2ef0b6338"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PHPCompatibility/PHPCompatibility/zipball/0d13ceeb8092853840cdd40c764ce90f28778630",
-                "reference": "0d13ceeb8092853840cdd40c764ce90f28778630",
+                "url": "https://api.github.com/repos/PHPCompatibility/PHPCompatibility/zipball/aba7b5d3aec1ea5311e912efece301e2ef0b6338",
+                "reference": "aba7b5d3aec1ea5311e912efece301e2ef0b6338",
                 "shasum": ""
             },
             "require": {
@@ -1146,7 +1146,7 @@
                     "type": "thanks_dev"
                 }
             ],
-            "time": "2026-03-22T22:29:50+00:00"
+            "time": "2026-04-06T00:21:12+00:00"
         },
         {
             "name": "phpcsstandards/phpcsutils",
@@ -1290,11 +1290,11 @@
         },
         {
             "name": "phpstan/phpstan",
-            "version": "2.1.42",
+            "version": "2.1.51",
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/1279e1ce86ba768f0780c9d889852b4e02ff40d0",
-                "reference": "1279e1ce86ba768f0780c9d889852b4e02ff40d0",
+                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/dc3b523c45e714c70de2ac5113b958223b55dc59",
+                "reference": "dc3b523c45e714c70de2ac5113b958223b55dc59",
                 "shasum": ""
             },
             "require": {
@@ -1339,7 +1339,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-03-17T14:58:32+00:00"
+            "time": "2026-04-21T18:22:01+00:00"
         },
         {
             "name": "phpunit/php-code-coverage",
