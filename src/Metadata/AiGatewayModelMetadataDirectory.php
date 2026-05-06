@@ -151,6 +151,25 @@ class AiGatewayModelMetadataDirectory extends AbstractApiBasedModelMetadataDirec
             new SupportedOption(OptionEnum::outputModalities(), [[ModalityEnum::image()]]),
         ];
 
+        $videoOptions = [
+            new SupportedOption(OptionEnum::candidateCount()),
+            new SupportedOption(
+                OptionEnum::outputFileType(),
+                [FileTypeEnum::inline(), FileTypeEnum::remote()]
+            ),
+            new SupportedOption(OptionEnum::outputMediaOrientation()),
+            new SupportedOption(OptionEnum::outputMediaAspectRatio()),
+            new SupportedOption(OptionEnum::customOptions()),
+            new SupportedOption(
+                OptionEnum::inputModalities(),
+                [
+                    [ModalityEnum::text()],
+                    [ModalityEnum::text(), ModalityEnum::image()],
+                ]
+            ),
+            new SupportedOption(OptionEnum::outputModalities(), [[ModalityEnum::video()]]),
+        ];
+
         $textAndImageOptions = array_merge(
             array_filter(
                 $textOptions,
@@ -209,6 +228,10 @@ class AiGatewayModelMetadataDirectory extends AbstractApiBasedModelMetadataDirec
                 case 'image':
                     $capabilities = [CapabilityEnum::imageGeneration()];
                     $options = $imageOptions;
+                    break;
+                case 'video':
+                    $capabilities = [CapabilityEnum::videoGeneration()];
+                    $options = $videoOptions;
                     break;
                 default:
                     continue 2;

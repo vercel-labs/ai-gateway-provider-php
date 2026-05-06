@@ -16,6 +16,7 @@ use Vercel\AiGatewayProvider\Metadata\AiGatewayModelMetadataDirectory;
 use Vercel\AiGatewayProvider\Models\AiGatewayImageGenerationModel;
 use Vercel\AiGatewayProvider\Models\AiGatewayTextAndImageGenerationModel;
 use Vercel\AiGatewayProvider\Models\AiGatewayTextGenerationModel;
+use Vercel\AiGatewayProvider\Models\AiGatewayVideoGenerationModel;
 use WordPress\AiClient\Common\Exception\RuntimeException;
 use WordPress\AiClient\Providers\ApiBasedImplementation\AbstractApiProvider;
 use WordPress\AiClient\Providers\ApiBasedImplementation\ListModelsApiBasedProviderAvailability;
@@ -62,12 +63,16 @@ class AiGatewayProvider extends AbstractApiProvider
 
         $hasTextGeneration = false;
         $hasImageGeneration = false;
+        $hasVideoGeneration = false;
         foreach ($capabilities as $capability) {
             if ($capability->isTextGeneration()) {
                 $hasTextGeneration = true;
             }
             if ($capability->isImageGeneration()) {
                 $hasImageGeneration = true;
+            }
+            if ($capability->isVideoGeneration()) {
+                $hasVideoGeneration = true;
             }
         }
 
@@ -89,6 +94,14 @@ class AiGatewayProvider extends AbstractApiProvider
 
         if ($hasImageGeneration) {
             return new AiGatewayImageGenerationModel(
+                $modelMetadata,
+                $providerMetadata,
+                $gatewayModelId
+            );
+        }
+
+        if ($hasVideoGeneration) {
+            return new AiGatewayVideoGenerationModel(
                 $modelMetadata,
                 $providerMetadata,
                 $gatewayModelId

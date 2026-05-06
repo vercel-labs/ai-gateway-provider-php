@@ -59,6 +59,19 @@ class AiGatewayModelMetadataDirectoryTest extends TestCase
         );
     }
 
+    private function makeVideoModel(array $overrides = []): array
+    {
+        return array_merge(
+            [
+                'id' => 'google/veo-3.0-fast-generate-001',
+                'name' => 'Veo 3.0 Fast',
+                'modelType' => 'video',
+                'specification' => ['modelId' => 'google/veo-3.0-fast-generate-001'],
+            ],
+            $overrides
+        );
+    }
+
     public function testGetRequestAuthenticationReturnsAiGatewayType(): void
     {
         $directory = $this->createDirectory(
@@ -127,10 +140,10 @@ class AiGatewayModelMetadataDirectoryTest extends TestCase
                 'specification' => ['modelId' => 'anthropic/claude-sonnet-4-6'],
             ]),
             [
-                'id' => 'some-provider/video-model',
-                'name' => 'Video Model',
-                'modelType' => 'video',
-                'specification' => ['modelId' => 'some-provider/video-model'],
+                'id' => 'openai/text-embedding-3-large',
+                'name' => 'Text Embedding 3 Large',
+                'modelType' => 'embedding',
+                'specification' => ['modelId' => 'openai/text-embedding-3-large'],
             ],
         ]));
 
@@ -156,6 +169,35 @@ class AiGatewayModelMetadataDirectoryTest extends TestCase
         $capabilities = $models[0]->getSupportedCapabilities();
         $this->assertCount(1, $capabilities);
         $this->assertTrue($capabilities[0]->isImageGeneration());
+    }
+
+    public function testListModelMetadataIncludesVideoModelsWithCorrectCapability(): void
+    {
+        $directory = $this->createDirectory($this->createConfigResponse([
+            $this->makeVideoModel(),
+        ]));
+
+        $models = $directory->listModelMetadata();
+
+        $this->assertCount(1, $models);
+        $this->assertSame('veo-3.0-fast-generate-001', $models[0]->getId());
+        $capabilities = $models[0]->getSupportedCapabilities();
+        $this->assertCount(1, $capabilities);
+        $this->assertTrue($capabilities[0]->isVideoGeneration());
+    }
+
+    public function testGetGatewayModelIdReturnsFullIdForVideoModel(): void
+    {
+        $directory = $this->createDirectory($this->createConfigResponse([
+            $this->makeVideoModel(),
+        ]));
+
+        $directory->listModelMetadata();
+
+        $this->assertSame(
+            'google/veo-3.0-fast-generate-001',
+            $directory->getGatewayModelId('veo-3.0-fast-generate-001')
+        );
     }
 
     public function testListModelMetadataSkipsModelsWithoutModelId(): void

@@ -103,6 +103,46 @@ function saveImageFile(File $imageFile): string
     return $outputPath;
 }
 
+/**
+ * Saves a video file from a video result to the tools/output directory, or returns the remote URL.
+ *
+ * @param File $videoFile The file DTO returned by $result->toFile().
+ * @return string The absolute path to the saved video file, or the remote URL if the file is remote.
+ */
+function saveVideoFile(File $videoFile): string
+{
+    if ($videoFile->isRemote()) {
+        $url = $videoFile->getUrl();
+        if (!$url) {
+            logError('Video result is marked as remote but does not contain a URL.');
+        }
+        return $url;
+    }
+
+    $base64 = $videoFile->getBase64Data();
+    if (!$base64) {
+        logError('Video result does not contain inline base64 data.');
+    }
+
+    $extension = $videoFile->getMimeTypeObject()->toExtension();
+
+    $outputDir = __DIR__ . '/output';
+    if (!is_dir($outputDir)) {
+        mkdir($outputDir, 0777, true);
+    }
+
+    $now = microtime(true);
+    $filename = 'video-' . date('Y-m-d-His', (int) $now) . '-' . sprintf('%03d', ($now - floor($now)) * 1000) . '.' . $extension;
+    $outputPath = $outputDir . '/' . $filename;
+    $videoBuffer = base64_decode($base64);
+    $bytes = file_put_contents($outputPath, $videoBuffer);
+    if ($bytes === false) {
+        logError("Failed to write video to {$outputPath}.");
+    }
+
+    return $outputPath;
+}
+
 // Read .env file for credentials.
 $envFile = dirname(__DIR__) . '/.env';
 if (file_exists($envFile)) {
@@ -245,6 +285,8 @@ try {
 try {
     if ($outputFormat === 'image' || $outputFormat === 'image-json' || $outputFormat === 'image-base64') {
         $result = $promptBuilder->generateImageResult();
+    } elseif ($outputFormat === 'video' || $outputFormat === 'video-json' || $outputFormat === 'video-base64') {
+        $result = $promptBuilder->generateVideoResult();
     } else {
         $result = $promptBuilder->generateTextResult();
     }
@@ -272,6 +314,21 @@ switch ($outputFormat) {
         printOutput(json_encode($result->toFile(), JSON_PRETTY_PRINT));
         break;
     case 'image-base64':
+        printOutput($result->toFile()->getBase64Data());
+        break;
+    case 'video':
+        $videoFile = $result->toFile();
+        $videoLocation = saveVideoFile($videoFile);
+        if ($videoFile->isRemote()) {
+            logInfo("Video URL: {$videoLocation}");
+        } else {
+            logInfo("Video saved to: {$videoLocation}");
+        }
+        break;
+    case 'video-json':
+        printOutput(json_encode($result->toFile(), JSON_PRETTY_PRINT));
+        break;
+    case 'video-base64':
         printOutput($result->toFile()->getBase64Data());
         break;
     case 'message-text':
