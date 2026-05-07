@@ -4,8 +4,6 @@ This project is a PHP provider package for the [Vercel AI Gateway](https://verce
 
 It works both as a standalone Composer package and as a WordPress plugin. Both are managed in this repository. The WordPress plugin effectively just bundles the underlying package and loads it in a WordPress compatible way.
 
-**Related project:** See the [AI SDK WordPress plugin](https://github.com/vercel-labs/ai-sdk-wp) for a WordPress plugin that makes the AI SDK usable in WordPress client-side code. You can combine the two plugins to use the AI Gateway through the AI SDK in WordPress.
-
 ## Critical Code Requirements
 
 - All code must be backward compatible with PHP 7.4. Worth a note: A few PHP 8+ functions are available via polyfills and are therefore safe to use here. See `vendor/wordpress/php-ai-client/src/polyfills.php` for the full list.
