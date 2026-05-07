@@ -73,6 +73,8 @@ $result = wp_ai_client_prompt( 'Hello, world!' )
 
 In this case, the first relevant model encountered on the site will be used, and if the site has the Vercel AI Gateway Provider plugin active and configured, it will rely on the AI Gateway.
 
+See [the official docs](https://github.com/vercel-labs/ai-gateway-provider-php/blob/main/docs/wordpress.md) for more examples.
+
 = External Services =
 
 This plugin connects to the AI Gateway API for inference.

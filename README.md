@@ -41,6 +41,8 @@ $result = wp_ai_client_prompt( 'Hello, world!' )
     ->generate_text_result();
 ```
 
+See [docs/wordpress.md](docs/wordpress.md) for more examples.
+
 ### As a Standalone Package
 
 ```php
@@ -61,6 +63,8 @@ $result = AiClient::prompt('Explain quantum computing')
 
 echo $result->toText();
 ```
+
+See [docs/php.md](docs/php.md) for more examples.
 
 ## License
 
