@@ -6,7 +6,7 @@
  * Description: The Vercel AI Gateway connector offers access to hundreds of text, image, and video AI models through 1 API key.
  * Requires at least: 7.0
  * Requires PHP: 7.4
- * Version: 1.0.0-alpha
+ * Version: 1.0.0-RC.1
  * Author: Vercel
  * Author URI: https://vercel.com
  * License: MIT
