@@ -16,6 +16,11 @@ composer require vercel-labs/ai-gateway-provider
 
 ### As a WordPress Plugin
 
+> **This plugin requires WordPress 7.0.**
+>
+> Since WordPress 7.0 is not yet released, you can currently test this plugin by using the [latest WordPress 7.0 RC](https://wordpress.org/news/2026/05/wordpress-7-0-release-candidate-3/).
+> Once WordPress 7.0 stable is out (scheduled for May 20, 2026), you can use it with the regular release.
+
 Make sure you're using WordPress 7.0 or higher.
 
 1. Download the plugin files in an `vercel-ai-gateway-provider` folder.
