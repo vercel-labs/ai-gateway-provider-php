@@ -9,6 +9,7 @@
 /vendor
 /AGENTS.md
 /CLAUDE.md
+/README.md
 /.editorconfig
 /composer.json
 /composer.lock
