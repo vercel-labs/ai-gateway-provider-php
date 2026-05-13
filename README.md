@@ -23,10 +23,17 @@ composer require vercel-labs/ai-gateway-provider
 
 Make sure you're using WordPress 7.0 or higher.
 
-1. Download the plugin files in an `vercel-ai-gateway-provider` folder.
-2. Upload the entire `vercel-ai-gateway-provider` folder to the `/wp-content/plugins/` directory.
-3. Visit **Plugins**, and activate the Vercel AI Gateway Provider plugin.
-4. Visit **Settings > Connectors** and paste your AI Gateway API key.
+#### Installation from within WordPress
+
+1. Visit **Plugins > Add New**.
+2. Search for **Vercel AI Gateway**, then install and activate the AI Gateway Provider plugin.
+3. Visit **Settings > Connectors** and paste your AI Gateway API key.
+
+#### Manual installation
+
+1. Upload the entire `vercel-ai-gateway-provider` folder to the `/wp-content/plugins/` directory.
+2. Visit **Plugins**, and activate the Vercel AI Gateway Provider plugin.
+3. Visit **Settings > Connectors** and paste your AI Gateway API key.
 
 ## Usage
 
