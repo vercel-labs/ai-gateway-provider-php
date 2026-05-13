@@ -6,7 +6,7 @@ $text = wp_ai_client_prompt( 'Hello, world!' )
     ->generate_text();
 ```
 
-Once you have installed the [AI Gateway Provider WordPress plugin](https://wordpress.org/plugins/vercel-ai-gateway-provider/), it registers the AI Gateway as a provider for the WordPress AI Client. The WordPress AI Client wraps the [`WordPress/php-ai-client` SDK](https://github.com/WordPress/php-ai-client) and exposes its prompt builder under the `wp_ai_client_prompt()` entry point, with all methods aliased to snake_case. For a comprehensive introduction to the underlying API, see [the tutorial for building a plugin using the WordPress AI Client](TBD).
+Once you have installed the [AI Gateway Provider WordPress plugin](https://wordpress.org/plugins/vercel-ai-gateway-provider/), it registers the AI Gateway as a provider for the WordPress AI Client. The WordPress AI Client wraps the [`WordPress/php-ai-client` SDK](https://github.com/WordPress/php-ai-client) and exposes its prompt builder under the `wp_ai_client_prompt()` entry point, with all methods aliased to snake_case.
 
 To get started, set your API key under **Settings > Connectors**, then use the examples below.
 
