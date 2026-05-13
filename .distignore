@@ -8,6 +8,7 @@
 /tools
 /vendor
 /AGENTS.md
+/CLAUDE.md
 /.editorconfig
 /composer.json
 /composer.lock
