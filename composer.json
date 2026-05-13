@@ -64,6 +64,7 @@
         "sort-packages": true
     },
     "scripts": {
+        "check:versions": "php tools/check-versions.php",
         "phpcbf": "phpcbf",
         "phpcs": "phpcs",
         "phpstan": "phpstan analyze --memory-limit=256M",
@@ -72,6 +73,7 @@
         "test:integration": [
             "@putenv COMPOSER_PROCESS_TIMEOUT=600",
             "phpunit --configuration phpunit-integration.xml.dist"
-        ]
+        ],
+        "update:since": "npx @felixarntz/wp-plugins-cli update-since . --version 1.0.0"
     }
 }
