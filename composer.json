@@ -74,6 +74,6 @@
             "@putenv COMPOSER_PROCESS_TIMEOUT=600",
             "phpunit --configuration phpunit-integration.xml.dist"
         ],
-        "update:since": "npx @felixarntz/wp-plugins-cli update-since . --version 1.0.0"
+        "update:since": "npx @felixarntz/wp-plugins-cli update-since . --version $(composer config version)"
     }
 }
