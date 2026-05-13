@@ -129,10 +129,10 @@ class AiGatewayProvider extends AbstractApiProvider
         }
 
         // In case we're in WordPress context and the plugin is symlinked, try the symlinked path.
-        $logoPath = dirname(__DIR__, 2) . '/assets/vercel-logo.png';
+        $logoPath = dirname(__DIR__, 2) . '/assets/vercel-logo.svg';
         if (defined('WP_PLUGIN_DIR') && is_string(WP_PLUGIN_DIR)) {
-            if (file_exists(WP_PLUGIN_DIR . '/vercel-ai-gateway-provider/assets/vercel-logo.png')) {
-                $logoPath = WP_PLUGIN_DIR . '/vercel-ai-gateway-provider/assets/vercel-logo.png';
+            if (file_exists(WP_PLUGIN_DIR . '/vercel-ai-gateway-provider/assets/vercel-logo.svg')) {
+                $logoPath = WP_PLUGIN_DIR . '/vercel-ai-gateway-provider/assets/vercel-logo.svg';
             }
         }
 
