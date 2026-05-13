@@ -37,6 +37,6 @@ class AiGatewayProviderTest extends TestCase
 
         $logoPath = $metadata->getLogoPath();
         $this->assertNotNull($logoPath);
-        $this->assertStringEndsWith('/assets/vercel-logo.png', $logoPath);
+        $this->assertStringEndsWith('/assets/vercel-logo.svg', $logoPath);
     }
 }
