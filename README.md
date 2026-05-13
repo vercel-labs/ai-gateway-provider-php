@@ -1,6 +1,6 @@
 # Vercel AI Gateway Provider
 
-Vercel AI Gateway provider for the [PHP AI Client](https://github.com/WordPress/php-ai-client) SDK. Works as a Composer package and WordPress plugin.
+Vercel AI Gateway provider for the [PHP AI Client](https://github.com/WordPress/php-ai-client) SDK. Works as a [Composer package](https://packagist.org/packages/vercel-labs/ai-gateway-provider) and [WordPress plugin](https://wordpress.org/plugins/vercel-ai-gateway-provider/).
 
 The Vercel AI Gateway allows you to use hundreds of generative AI models from over 20 different providers, to generate text, images, video, and more.
 
