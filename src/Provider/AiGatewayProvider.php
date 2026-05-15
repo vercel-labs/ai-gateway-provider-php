@@ -38,6 +38,15 @@ class AiGatewayProvider extends AbstractApiProvider
     public const VERSION = '1.0.0';
 
     /**
+     * Environment variable to expose full gateway model IDs instead of flat model IDs.
+     *
+     * @since n.e.x.t
+     *
+     * @var string
+     */
+    public const USE_FULL_MODEL_IDS_ENV_VAR = 'AI_GATEWAY_USE_FULL_MODEL_IDS';
+
+    /**
      * {@inheritDoc}
      *
      * @since 1.0.0
@@ -165,6 +174,23 @@ class AiGatewayProvider extends AbstractApiProvider
      */
     protected static function createModelMetadataDirectory(): ModelMetadataDirectoryInterface
     {
-        return new AiGatewayModelMetadataDirectory();
+        return new AiGatewayModelMetadataDirectory(static::useFullModelIds());
+    }
+
+    /**
+     * Returns whether the provider should expose full gateway model IDs.
+     *
+     * @since n.e.x.t
+     *
+     * @return bool True when full gateway model IDs should be exposed.
+     */
+    protected static function useFullModelIds(): bool
+    {
+        $value = getenv(self::USE_FULL_MODEL_IDS_ENV_VAR);
+        if ($value === false) {
+            return false;
+        }
+
+        return in_array(strtolower(trim($value)), ['1', 'true', 'yes', 'on'], true);
     }
 }
