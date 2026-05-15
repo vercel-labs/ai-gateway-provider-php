@@ -25,6 +25,8 @@ $text = AiClient::prompt('Explain quantum computing in one paragraph.')
     ->generateText();
 ```
 
+By default, the provider exposes flat model IDs such as `claude-sonnet-4.7` for compatibility with the PHP AI Client SDK and WordPress environments. If your runtime supports slash-delimited model IDs and you need to distinguish gateway models that share the same flat ID, set `AI_GATEWAY_USE_FULL_MODEL_IDS=true` before the provider metadata is loaded.
+
 ## System instruction and generation parameters
 
 ```php
