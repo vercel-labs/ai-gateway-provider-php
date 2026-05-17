@@ -11,7 +11,7 @@ The Vercel AI Gateway connector offers access to hundreds of text, image, and vi
 
 == Description ==
 
-This plugin allows your WordPress site to connect to the Vercel AI Gateway. It enables your WordPress site to use hundreds of generative AI models from over 20 different providers, to generate text, images, video, and more.
+This plugin allows your WordPress site to connect to the Vercel AI Gateway. It enables your WordPress site to use hundreds of generative AI models from over 40 different providers, to generate text, images, video, and more.
 
 The Vercel AI Gateway connector is built on top of WordPress's built-in AI client and integrates seamlessly with its connector API. This way it unlocks using AI powered plugins on your site.
 
@@ -22,7 +22,7 @@ The Vercel AI Gateway connector is built on top of WordPress's built-in AI clien
 
 = Features =
 
-* Access hundreds of models from over 20 providers with 1 API key
+* Access hundreds of models from over 40 providers with 1 API key
 * Generate text, images, video, and more, including multi-turn conversations
 * Unified billing and observability across your entire AI stack, with text, image, and video models
 * Automatic fallbacks during provider outages so your app stays up even when a model goes down
@@ -32,7 +32,7 @@ Available models are dynamically discovered from the AI Gateway API - you get ac
 
 = Providers and Models =
 
-The AI Gateway gives you access to more than 100 models from over 20 providers, including:
+The AI Gateway gives you access to more than 100 models from over 40 providers, including:
 
 - Amazon (Nova models)
 - Anthropic (Claude models)
