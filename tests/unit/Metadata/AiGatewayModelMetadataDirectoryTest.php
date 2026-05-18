@@ -266,6 +266,67 @@ class AiGatewayModelMetadataDirectoryTest extends TestCase
         );
     }
 
+    public function testAnthropicDottedModelIdAlsoExposesDashedAlias(): void
+    {
+        $directory = $this->createDirectory($this->createConfigResponse([
+            $this->makeLanguageModel([
+                'id' => 'anthropic/claude-opus-4.7',
+                'name' => 'Claude Opus 4.7',
+                'specification' => ['modelId' => 'anthropic/claude-opus-4.7'],
+            ]),
+        ]));
+
+        $models = $directory->listModelMetadata();
+        $ids = array_map(function ($m) {
+            return $m->getId();
+        }, $models);
+
+        $this->assertContains('claude-opus-4.7', $ids);
+        $this->assertContains('claude-opus-4-7', $ids);
+        $this->assertSame(
+            'anthropic/claude-opus-4.7',
+            $directory->getGatewayModelId('claude-opus-4.7')
+        );
+        $this->assertSame(
+            'anthropic/claude-opus-4.7',
+            $directory->getGatewayModelId('claude-opus-4-7')
+        );
+    }
+
+    public function testAnthropicModelWithoutDotsDoesNotProduceDuplicateAlias(): void
+    {
+        $directory = $this->createDirectory($this->createConfigResponse([
+            $this->makeLanguageModel([
+                'id' => 'anthropic/claude-opus-4',
+                'name' => 'Claude Opus 4',
+                'specification' => ['modelId' => 'anthropic/claude-opus-4'],
+            ]),
+        ]));
+
+        $models = $directory->listModelMetadata();
+
+        $this->assertCount(1, $models);
+        $this->assertSame('claude-opus-4', $models[0]->getId());
+    }
+
+    public function testNonAnthropicDottedModelIdDoesNotGetDashedAlias(): void
+    {
+        $directory = $this->createDirectory($this->createConfigResponse([
+            $this->makeLanguageModel([
+                'id' => 'google/gemini-2.5-flash',
+                'name' => 'Gemini 2.5 Flash',
+                'specification' => ['modelId' => 'google/gemini-2.5-flash'],
+            ]),
+        ]));
+
+        $models = $directory->listModelMetadata();
+        $ids = array_map(function ($m) {
+            return $m->getId();
+        }, $models);
+
+        $this->assertSame(['gemini-2.5-flash'], $ids);
+    }
+
     public function testGetGatewayModelIdThrowsForUnknownModel(): void
     {
         $directory = $this->createDirectory($this->createConfigResponse([]));

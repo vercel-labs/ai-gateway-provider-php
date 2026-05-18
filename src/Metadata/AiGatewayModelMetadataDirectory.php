@@ -245,6 +245,26 @@ class AiGatewayModelMetadataDirectory extends AbstractApiBasedModelMetadataDirec
                 $capabilities,
                 $options
             );
+
+            /*
+             * Anthropic publishes its own model IDs with dashes instead of dots
+             * (e.g. `claude-opus-4-7`), while the AI Gateway exposes them with dots
+             * (e.g. `claude-opus-4.7`). Register the dashed form as an additional
+             * alias so callers using Anthropic's native IDs resolve to the same
+             * underlying gateway model.
+             */
+            if (strpos($gatewayId, 'anthropic/') === 0 && strpos($flatId, '.') !== false) {
+                $aliasFlatId = str_replace('.', '-', $flatId);
+                if ($aliasFlatId !== $flatId && !isset($this->gatewayModelIdMap[$aliasFlatId])) {
+                    $this->gatewayModelIdMap[$aliasFlatId] = $gatewayId;
+                    $modelsMetadata[] = new ModelMetadata(
+                        $aliasFlatId,
+                        $name,
+                        $capabilities,
+                        $options
+                    );
+                }
+            }
         }
 
         usort($modelsMetadata, [$this, 'modelSortCallback']);
