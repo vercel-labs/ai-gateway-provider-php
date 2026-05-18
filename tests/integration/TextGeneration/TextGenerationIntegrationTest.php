@@ -312,8 +312,8 @@ class TextGenerationIntegrationTest extends TestCase
         return [
             'Anthropic' => ['claude-sonnet-4.6'],
             'Google'    => ['gemini-3-pro-preview'],
-            'OpenAI'    => ['o3-mini'],
-            'xAI'       => ['grok-3-mini'],
+            'OpenAI'    => ['gpt-5.4-mini'],
+            'xAI'       => ['grok-4.20-reasoning'],
         ];
     }
 
@@ -332,10 +332,10 @@ class TextGenerationIntegrationTest extends TestCase
             case 'gemini-3-pro-preview':
                 $providerOptions = ['google' => ['thinkingConfig' => ['includeThoughts' => true]]];
                 break;
-            case 'o3-mini':
+            case 'gpt-5.4-mini':
                 $providerOptions = ['openai' => ['reasoningEffort' => 'medium']];
                 break;
-            case 'grok-3-mini':
+            case 'grok-4.20-reasoning':
                 // TODO: For some reason, despite the model reasoning, the response does not include reasoning parts.
                 $providerOptions = ['xai' => ['reasoning' => [
                     'effort' => 'low',
