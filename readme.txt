@@ -73,13 +73,17 @@ $result = wp_ai_client_prompt( 'Hello, world!' )
 
 In this case, the first relevant model encountered on the site will be used, and if the site has the Vercel AI Gateway Provider plugin active and configured, it will rely on the AI Gateway.
 
-See [the official docs](https://github.com/vercel-labs/ai-gateway-provider-php/blob/main/docs/wordpress.md) for more examples.
+See [the official docs](https://vercel.com/docs/ai-gateway/ecosystem/framework-integrations/wordpress) for more examples.
 
 = External Services =
 
 This plugin connects to the AI Gateway API for inference.
 
 See the [Vercel AI Product Terms](https://vercel.com/legal/ai-product-terms) and the [Vercel Privacy Policy](https://vercel.com/legal/privacy-policy).
+
+= Contributing =
+
+Contributions to the plugin are welcome in the project's [GitHub repository](https://github.com/vercel-labs/ai-gateway-provider-php).
 
 == Installation ==
 
