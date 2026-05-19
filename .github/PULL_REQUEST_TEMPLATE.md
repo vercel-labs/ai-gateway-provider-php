@@ -6,3 +6,13 @@ Fixes #
 ## Relevant technical choices
 
 <!-- Please describe your changes. -->
+
+## Checklist
+
+<!--
+Leave items unchecked that don't apply.
+-->
+
+- [ ] All commits are signed (PRs with unsigned commits cannot be merged)
+- [ ] Tests have been added / updated
+- [ ] I have reviewed this pull request (self-review)
