@@ -15,11 +15,6 @@ This plugin allows your WordPress site to connect to the Vercel AI Gateway. It e
 
 The Vercel AI Gateway connector is built on top of WordPress's built-in AI client and integrates seamlessly with its connector API. This way it unlocks using AI powered plugins on your site.
 
-> **This plugin requires WordPress 7.0.**
->
-> Since WordPress 7.0 is not yet released, you can currently test this plugin by using the [latest WordPress 7.0 RC](https://wordpress.org/news/2026/05/wordpress-7-0-release-candidate-4/).
-> Once WordPress 7.0 stable is out (scheduled for May 20, 2026), you can use it with the regular release.
-
 = Features =
 
 * Access hundreds of models from over 40 providers with 1 API key
