@@ -3,7 +3,7 @@
 /**
  * Class Vercel\AiGatewayProvider\Models\AiGatewayTextAndImageGenerationModel
  *
- * @since n.e.x.t
+ * @since 1.0.0
  *
  * @package Vercel\AiGatewayProvider
  */
@@ -32,7 +32,7 @@ use WordPress\AiClient\Results\DTO\GenerativeAiResult;
  * delegate to the language-model endpoint — the framework sets the image output modality on the config
  * before calling generateImageResult().
  *
- * @since n.e.x.t
+ * @since 1.0.0
  */
 class AiGatewayTextAndImageGenerationModel implements
     ApiBasedModelInterface,
@@ -49,7 +49,7 @@ class AiGatewayTextAndImageGenerationModel implements
     /**
      * Constructor.
      *
-     * @since n.e.x.t
+     * @since 1.0.0
      *
      * @param ModelMetadata    $metadata         The metadata for the model.
      * @param ProviderMetadata $providerMetadata The metadata for the model's provider.
@@ -70,7 +70,7 @@ class AiGatewayTextAndImageGenerationModel implements
     /**
      * {@inheritDoc}
      *
-     * @since n.e.x.t
+     * @since 1.0.0
      */
     public function metadata(): ModelMetadata
     {
@@ -80,7 +80,7 @@ class AiGatewayTextAndImageGenerationModel implements
     /**
      * {@inheritDoc}
      *
-     * @since n.e.x.t
+     * @since 1.0.0
      */
     public function providerMetadata(): ProviderMetadata
     {
@@ -90,7 +90,7 @@ class AiGatewayTextAndImageGenerationModel implements
     /**
      * {@inheritDoc}
      *
-     * @since n.e.x.t
+     * @since 1.0.0
      */
     public function setConfig(ModelConfig $config): void
     {
@@ -100,7 +100,7 @@ class AiGatewayTextAndImageGenerationModel implements
     /**
      * {@inheritDoc}
      *
-     * @since n.e.x.t
+     * @since 1.0.0
      */
     public function getConfig(): ModelConfig
     {
@@ -110,7 +110,7 @@ class AiGatewayTextAndImageGenerationModel implements
     /**
      * {@inheritDoc}
      *
-     * @since n.e.x.t
+     * @since 1.0.0
      */
     public function setRequestOptions(RequestOptions $requestOptions): void
     {
@@ -120,7 +120,7 @@ class AiGatewayTextAndImageGenerationModel implements
     /**
      * {@inheritDoc}
      *
-     * @since n.e.x.t
+     * @since 1.0.0
      */
     public function getRequestOptions(): ?RequestOptions
     {
@@ -130,7 +130,7 @@ class AiGatewayTextAndImageGenerationModel implements
     /**
      * {@inheritDoc}
      *
-     * @since n.e.x.t
+     * @since 1.0.0
      */
     public function setHttpTransporter(HttpTransporterInterface $httpTransporter): void
     {
@@ -140,7 +140,7 @@ class AiGatewayTextAndImageGenerationModel implements
     /**
      * {@inheritDoc}
      *
-     * @since n.e.x.t
+     * @since 1.0.0
      */
     public function getHttpTransporter(): HttpTransporterInterface
     {
@@ -150,7 +150,7 @@ class AiGatewayTextAndImageGenerationModel implements
     /**
      * {@inheritDoc}
      *
-     * @since n.e.x.t
+     * @since 1.0.0
      */
     public function setRequestAuthentication(RequestAuthenticationInterface $requestAuthentication): void
     {
@@ -160,7 +160,7 @@ class AiGatewayTextAndImageGenerationModel implements
     /**
      * {@inheritDoc}
      *
-     * @since n.e.x.t
+     * @since 1.0.0
      */
     public function getRequestAuthentication(): RequestAuthenticationInterface
     {
@@ -170,7 +170,7 @@ class AiGatewayTextAndImageGenerationModel implements
     /**
      * {@inheritDoc}
      *
-     * @since n.e.x.t
+     * @since 1.0.0
      */
     public function generateTextResult(array $prompt): GenerativeAiResult
     {
@@ -180,7 +180,7 @@ class AiGatewayTextAndImageGenerationModel implements
     /**
      * {@inheritDoc}
      *
-     * @since n.e.x.t
+     * @since 1.0.0
      */
     public function generateImageResult(array $prompt): GenerativeAiResult
     {

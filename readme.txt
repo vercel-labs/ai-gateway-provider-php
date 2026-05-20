@@ -2,7 +2,7 @@
 
 Contributors: vercellabs, flixos90
 Tested up to: 7.0
-Stable tag:   1.0.0-RC.1
+Stable tag:   1.0.0
 License:      MIT
 License URI:  https://opensource.org/license/mit
 Tags:         ai, vercel, artificial-intelligence, llm, connector
@@ -14,11 +14,6 @@ The Vercel AI Gateway connector offers access to hundreds of text, image, and vi
 This plugin allows your WordPress site to connect to the Vercel AI Gateway. It enables your WordPress site to use hundreds of generative AI models from over 40 different providers, to generate text, images, video, and more.
 
 The Vercel AI Gateway connector is built on top of WordPress's built-in AI client and integrates seamlessly with its connector API. This way it unlocks using AI powered plugins on your site.
-
-> **This plugin requires WordPress 7.0.**
->
-> Since WordPress 7.0 is not yet released, you can currently test this plugin by using the [latest WordPress 7.0 RC](https://wordpress.org/news/2026/05/wordpress-7-0-release-candidate-4/).
-> Once WordPress 7.0 stable is out (scheduled for May 20, 2026), you can use it with the regular release.
 
 = Features =
 

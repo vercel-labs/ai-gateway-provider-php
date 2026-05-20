@@ -3,7 +3,7 @@
 /**
  * Class Vercel\AiGatewayProvider\Models\AiGatewayVideoGenerationModel
  *
- * @since n.e.x.t
+ * @since 1.0.0
  *
  * @package Vercel\AiGatewayProvider
  */
@@ -38,7 +38,7 @@ use WordPress\AiClient\Results\Enums\FinishReasonEnum;
 /**
  * Class for the Vercel AI Gateway video generation model.
  *
- * @since n.e.x.t
+ * @since 1.0.0
  *
  * @phpstan-type VideoData array{type?: string, url?: string, data?: string, mediaType?: string}
  * @phpstan-type SsePayload array{
@@ -68,7 +68,7 @@ class AiGatewayVideoGenerationModel extends AbstractApiBasedModel implements Vid
     /**
      * Constructor.
      *
-     * @since n.e.x.t
+     * @since 1.0.0
      *
      * @param ModelMetadata    $metadata         The metadata for the model.
      * @param ProviderMetadata $providerMetadata The metadata for the model's provider.
@@ -86,7 +86,7 @@ class AiGatewayVideoGenerationModel extends AbstractApiBasedModel implements Vid
     /**
      * {@inheritDoc}
      *
-     * @since n.e.x.t
+     * @since 1.0.0
      */
     protected function getGatewayModelId(): string
     {
@@ -96,7 +96,7 @@ class AiGatewayVideoGenerationModel extends AbstractApiBasedModel implements Vid
     /**
      * {@inheritDoc}
      *
-     * @since n.e.x.t
+     * @since 1.0.0
      */
     public function getRequestAuthentication(): RequestAuthenticationInterface
     {
@@ -110,7 +110,7 @@ class AiGatewayVideoGenerationModel extends AbstractApiBasedModel implements Vid
     /**
      * {@inheritDoc}
      *
-     * @since n.e.x.t
+     * @since 1.0.0
      */
     public function generateVideoResult(array $prompt): GenerativeAiResult
     {
@@ -164,7 +164,7 @@ class AiGatewayVideoGenerationModel extends AbstractApiBasedModel implements Vid
     /**
      * Extracts the prompt text and optional image part from the prompt messages.
      *
-     * @since n.e.x.t
+     * @since 1.0.0
      *
      * @param list<Message> $prompt The prompt messages.
      * @return array{prompt: string, image: array<string, string>|null} The extracted prompt.
@@ -227,7 +227,7 @@ class AiGatewayVideoGenerationModel extends AbstractApiBasedModel implements Vid
     /**
      * Parses the API response into a GenerativeAiResult.
      *
-     * @since n.e.x.t
+     * @since 1.0.0
      *
      * @param Response $response The HTTP response.
      * @return GenerativeAiResult The parsed result.
@@ -321,7 +321,7 @@ class AiGatewayVideoGenerationModel extends AbstractApiBasedModel implements Vid
      * The AI Gateway video endpoint returns a single SSE data event containing
      * the entire JSON payload on one line.
      *
-     * @since n.e.x.t
+     * @since 1.0.0
      *
      * @param string $body The SSE response body.
      * @return SsePayload|null The decoded payload, or null if no valid data event was found.

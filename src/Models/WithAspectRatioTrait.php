@@ -3,7 +3,7 @@
 /**
  * Trait Vercel\AiGatewayProvider\Models\WithAspectRatioTrait
  *
- * @since n.e.x.t
+ * @since 1.0.0
  *
  * @package Vercel\AiGatewayProvider
  */
@@ -17,7 +17,7 @@ use WordPress\AiClient\Providers\Models\DTO\ModelConfig;
 /**
  * Trait for resolving aspect ratio from model config.
  *
- * @since n.e.x.t
+ * @since 1.0.0
  */
 trait WithAspectRatioTrait
 {
@@ -26,7 +26,7 @@ trait WithAspectRatioTrait
      *
      * Explicit aspect ratio takes priority over orientation mapping.
      *
-     * @since n.e.x.t
+     * @since 1.0.0
      *
      * @param ModelConfig $config The model config.
      * @return string|null The aspect ratio string, or null if not set.

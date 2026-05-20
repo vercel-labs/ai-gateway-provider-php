@@ -3,7 +3,7 @@
 /**
  * Trait Vercel\AiGatewayProvider\Models\WithProviderOptionsTrait
  *
- * @since n.e.x.t
+ * @since 1.0.0
  *
  * @package Vercel\AiGatewayProvider
  */
@@ -17,7 +17,7 @@ use WordPress\AiClient\Common\Exception\InvalidArgumentException;
 /**
  * Trait for unified provider options handling in gateway models.
  *
- * @since n.e.x.t
+ * @since 1.0.0
  */
 trait WithProviderOptionsTrait
 {
@@ -30,7 +30,7 @@ trait WithProviderOptionsTrait
      * The resulting providerOptions are written back into $requestBody['providerOptions']
      * if non-empty, or set to an empty stdClass otherwise.
      *
-     * @since n.e.x.t
+     * @since 1.0.0
      *
      * @param array<string, mixed> $requestBody         The request body to amend.
      * @param array<string, mixed> $customOptions       The custom options to process.
