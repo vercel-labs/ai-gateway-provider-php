@@ -100,7 +100,7 @@ class AiGatewayTextGenerationModel extends AbstractApiBasedModel implements Text
     /**
      * {@inheritDoc}
      *
-     * @since n.e.x.t
+     * @since 1.0.0
      */
     protected function getGatewayModelId(): string
     {
@@ -110,7 +110,7 @@ class AiGatewayTextGenerationModel extends AbstractApiBasedModel implements Text
     /**
      * Extracts the provider prefix from the gateway model ID.
      *
-     * @since n.e.x.t
+     * @since 1.0.0
      *
      * @return string The provider name (e.g. "anthropic"), or empty string if no slash present.
      */
@@ -565,7 +565,7 @@ class AiGatewayTextGenerationModel extends AbstractApiBasedModel implements Text
     /**
      * Builds the correct providerMetadata shape for a thought signature based on the current provider.
      *
-     * @since n.e.x.t
+     * @since 1.0.0
      *
      * @param string $thoughtSignature The thought signature value.
      * @return array<string, array<string, string>> The providerMetadata array.
@@ -594,7 +594,7 @@ class AiGatewayTextGenerationModel extends AbstractApiBasedModel implements Text
     /**
      * Extracts the thought signature from a content part's provider metadata.
      *
-     * @since n.e.x.t
+     * @since 1.0.0
      *
      * @param ResponseContentPart $contentPart The content part from the response.
      * @return string|null The thought signature, or null if not present.
