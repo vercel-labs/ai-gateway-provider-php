@@ -2,7 +2,7 @@
 
 Contributors: vercellabs, flixos90
 Tested up to: 7.0
-Stable tag:   1.0.0-RC.1
+Stable tag:   1.0.0
 License:      MIT
 License URI:  https://opensource.org/license/mit
 Tags:         ai, vercel, artificial-intelligence, llm, connector
