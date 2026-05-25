@@ -19,9 +19,9 @@ use WordPress\AiClient\Providers\Models\Enums\OptionEnum;
 
 class AiGatewayModelMetadataDirectoryTest extends TestCase
 {
-    private function createDirectory(Response $response): AiGatewayModelMetadataDirectory
+    private function createDirectory(Response $response, bool $useFullModelIds = false): AiGatewayModelMetadataDirectory
     {
-        $directory = new AiGatewayModelMetadataDirectory();
+        $directory = new AiGatewayModelMetadataDirectory($useFullModelIds);
         $directory->setHttpTransporter(new MockHttpTransporter($response));
         $directory->setRequestAuthentication(new ApiKeyRequestAuthentication('test-key'));
         return $directory;
@@ -325,6 +325,33 @@ class AiGatewayModelMetadataDirectoryTest extends TestCase
         }, $models);
 
         $this->assertSame(['gemini-2.5-flash'], $ids);
+    }
+
+    public function testFullModelIdsCanBeEnabled(): void
+    {
+        $directory = $this->createDirectory($this->createConfigResponse([
+            $this->makeLanguageModel([
+                'id' => 'openai/gpt-4o',
+                'name' => 'GPT-4o',
+                'specification' => ['modelId' => 'openai/gpt-4o'],
+            ]),
+            $this->makeLanguageModel([
+                'id' => 'azure/gpt-4o',
+                'name' => 'GPT-4o on Azure',
+                'specification' => ['modelId' => 'azure/gpt-4o'],
+            ]),
+        ]), true);
+
+        $models = $directory->listModelMetadata();
+        $ids = array_map(function ($m) {
+            return $m->getId();
+        }, $models);
+
+        $this->assertCount(2, $models);
+        $this->assertContains('openai/gpt-4o', $ids);
+        $this->assertContains('azure/gpt-4o', $ids);
+        $this->assertSame('openai/gpt-4o', $directory->getGatewayModelId('openai/gpt-4o'));
+        $this->assertSame('azure/gpt-4o', $directory->getGatewayModelId('azure/gpt-4o'));
     }
 
     public function testGetGatewayModelIdThrowsForUnknownModel(): void

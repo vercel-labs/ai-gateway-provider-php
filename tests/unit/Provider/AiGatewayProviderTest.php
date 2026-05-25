@@ -39,4 +39,30 @@ class AiGatewayProviderTest extends TestCase
         $this->assertNotNull($logoPath);
         $this->assertStringEndsWith('/assets/vercel-logo.svg', $logoPath);
     }
+
+    public function testUseFullModelIdsReadsEnvironmentVariable(): void
+    {
+        $previousValue = getenv(AiGatewayProvider::USE_FULL_MODEL_IDS_ENV_VAR);
+        $method = new \ReflectionMethod(AiGatewayProvider::class, 'useFullModelIds');
+        if (PHP_VERSION_ID < 80500) {
+            $method->setAccessible(true);
+        }
+
+        try {
+            putenv(AiGatewayProvider::USE_FULL_MODEL_IDS_ENV_VAR);
+            $this->assertFalse($method->invoke(null));
+
+            putenv(AiGatewayProvider::USE_FULL_MODEL_IDS_ENV_VAR . '=true');
+            $this->assertTrue($method->invoke(null));
+
+            putenv(AiGatewayProvider::USE_FULL_MODEL_IDS_ENV_VAR . '=0');
+            $this->assertFalse($method->invoke(null));
+        } finally {
+            if ($previousValue === false) {
+                putenv(AiGatewayProvider::USE_FULL_MODEL_IDS_ENV_VAR);
+            } else {
+                putenv(AiGatewayProvider::USE_FULL_MODEL_IDS_ENV_VAR . '=' . $previousValue);
+            }
+        }
+    }
 }
