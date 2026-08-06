@@ -4,6 +4,7 @@
 /.gitignore
 /.distignore
 /.wordpress-org
+/skills
 /tests
 /tools
 /vendor

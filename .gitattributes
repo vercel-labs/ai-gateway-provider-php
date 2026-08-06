@@ -9,6 +9,7 @@ readme.txt export-ignore
 /.gitignore export-ignore
 /.distignore export-ignore
 /.wordpress-org export-ignore
+/skills export-ignore
 /tests export-ignore
 /tools export-ignore
 /AGENTS.md export-ignore
