@@ -18,3 +18,10 @@ readme.txt export-ignore
 /phpstan.neon.dist export-ignore
 /phpunit-integration.xml.dist export-ignore
 /phpunit.xml.dist export-ignore
+
+# Intentionally NOT export-ignored - these ship in the Composer archive:
+# /docs        - user-facing usage guides linked from README.md
+# /assets      - provider logo, loaded at runtime
+# /README.md   - rendered on packagist.org
+# /composer.json
+# /composer.lock

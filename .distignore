@@ -17,3 +17,10 @@
 /phpstan.neon.dist
 /phpunit-integration.xml.dist
 /phpunit.xml.dist
+
+# Intentionally NOT ignored - these ship in the WordPress.org plugin:
+# /docs             - user-facing usage guides
+# /assets           - provider logo, loaded at runtime
+# /plugin.php       - plugin bootstrap; export-ignored for the Composer archive
+# /readme.txt       - rendered on wordpress.org; export-ignored for the Composer archive
+# /src/autoload.php - registers the PSR-4 autoloader; the Composer archive relies on Composer instead
