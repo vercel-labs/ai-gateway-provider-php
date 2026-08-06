@@ -4,6 +4,13 @@ Vercel AI Gateway provider for the [PHP AI Client](https://github.com/WordPress/
 
 The Vercel AI Gateway allows you to use hundreds of generative AI models from over 40 different providers, to generate text, images, video, and more.
 
+> [!TIP]
+> **There's a skill for that!** Teach your coding agent about how this provider can be used.
+>
+> ```
+> npx skills add vercel-labs/ai-gateway-provider-php --skill use-ai-gateway-provider
+> ```
+
 ## Installation
 
 ### As a Composer Package

@@ -15,6 +15,12 @@ This plugin allows your WordPress site to connect to the Vercel AI Gateway. It e
 
 The Vercel AI Gateway connector is built on top of WordPress's built-in AI client and integrates seamlessly with its connector API. This way it unlocks using AI powered plugins on your site.
 
+> **There's a skill for that!** Teach your coding agent about how this provider can be used.
+>
+> ```
+> npx skills add vercel-labs/ai-gateway-provider-php --skill use-ai-gateway-provider
+> ```
+
 = Features =
 
 * Access hundreds of models from over 40 providers with 1 API key
