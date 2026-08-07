@@ -48,7 +48,7 @@ class AiGatewayModelMetadataDirectory extends AbstractApiBasedModelMetadataDirec
     /**
      * Whether model metadata should expose full gateway model IDs.
      *
-     * @since n.e.x.t
+     * @since 1.0.1
      *
      * @var bool
      */
@@ -66,7 +66,7 @@ class AiGatewayModelMetadataDirectory extends AbstractApiBasedModelMetadataDirec
     /**
      * Constructor.
      *
-     * @since n.e.x.t
+     * @since 1.0.1
      *
      * @param bool $useFullModelIds Whether to expose full gateway model IDs in metadata.
      */

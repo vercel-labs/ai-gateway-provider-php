@@ -35,12 +35,12 @@ use WordPress\AiClient\Providers\Models\DTO\ModelMetadata;
  */
 class AiGatewayProvider extends AbstractApiProvider
 {
-    public const VERSION = '1.0.0';
+    public const VERSION = '1.0.2';
 
     /**
      * Environment variable to expose full gateway model IDs instead of flat model IDs.
      *
-     * @since n.e.x.t
+     * @since 1.0.1
      *
      * @var string
      */
@@ -180,7 +180,7 @@ class AiGatewayProvider extends AbstractApiProvider
     /**
      * Returns whether the provider should expose full gateway model IDs.
      *
-     * @since n.e.x.t
+     * @since 1.0.1
      *
      * @return bool True when full gateway model IDs should be exposed.
      */

@@ -1,8 +1,8 @@
 === Vercel AI Gateway Provider ===
 
 Contributors: vercellabs, flixos90
-Tested up to: 7.0
-Stable tag:   1.0.0
+Tested up to: 7.1
+Stable tag:   1.0.2
 License:      MIT
 License URI:  https://opensource.org/license/mit
 Tags:         ai, vercel, artificial-intelligence, llm, connector
