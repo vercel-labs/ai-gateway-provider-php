@@ -46,6 +46,15 @@ use WordPress\AiClient\Providers\Models\Enums\OptionEnum;
 class AiGatewayModelMetadataDirectory extends AbstractApiBasedModelMetadataDirectory
 {
     /**
+     * Whether model metadata should expose full gateway model IDs.
+     *
+     * @since n.e.x.t
+     *
+     * @var bool
+     */
+    private bool $useFullModelIds;
+
+    /**
      * Map of flat model IDs to full gateway model IDs.
      *
      * @since 1.0.0
@@ -53,6 +62,18 @@ class AiGatewayModelMetadataDirectory extends AbstractApiBasedModelMetadataDirec
      * @var array<string, string>
      */
     private array $gatewayModelIdMap = [];
+
+    /**
+     * Constructor.
+     *
+     * @since n.e.x.t
+     *
+     * @param bool $useFullModelIds Whether to expose full gateway model IDs in metadata.
+     */
+    public function __construct(bool $useFullModelIds = false)
+    {
+        $this->useFullModelIds = $useFullModelIds;
+    }
 
     /**
      * {@inheritDoc}
@@ -206,6 +227,7 @@ class AiGatewayModelMetadataDirectory extends AbstractApiBasedModelMetadataDirec
             $flatId = $slashPos !== false ? substr($specModelId, $slashPos + 1) : $specModelId;
 
             $name = $model['name'] ?? $flatId;
+            $modelId = $this->useFullModelIds ? $specModelId : $flatId;
 
             $modelType = $model['modelType'];
             switch ($modelType) {
@@ -237,10 +259,10 @@ class AiGatewayModelMetadataDirectory extends AbstractApiBasedModelMetadataDirec
                     continue 2;
             }
 
-            $this->gatewayModelIdMap[$flatId] = $gatewayId;
+            $this->gatewayModelIdMap[$modelId] = $gatewayId;
 
             $modelsMetadata[] = new ModelMetadata(
-                $flatId,
+                $modelId,
                 $name,
                 $capabilities,
                 $options
@@ -253,7 +275,7 @@ class AiGatewayModelMetadataDirectory extends AbstractApiBasedModelMetadataDirec
              * alias so callers using Anthropic's native IDs resolve to the same
              * underlying gateway model.
              */
-            if (strpos($gatewayId, 'anthropic/') === 0 && strpos($flatId, '.') !== false) {
+            if (!$this->useFullModelIds && strpos($gatewayId, 'anthropic/') === 0 && strpos($flatId, '.') !== false) {
                 $aliasFlatId = str_replace('.', '-', $flatId);
                 if ($aliasFlatId !== $flatId && !isset($this->gatewayModelIdMap[$aliasFlatId])) {
                     $this->gatewayModelIdMap[$aliasFlatId] = $gatewayId;
